@@ -24,6 +24,7 @@ export function useExternalCustomer() {
   }
 
   function login(context) {
+    console.log(context.customer)
     return new Promise((resolve, reject) => {
       if (context.customer?.token) {
         logIn(context.customer.token)
@@ -52,14 +53,13 @@ export function useVoyadoCustomer() {
     send({ type: 'DO_LOOKUP', data: { key } })
   }
 
+
   const states = {
     isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION_REQUIRED'),
     isPreExisting: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER'),
-    isAdditionalDataRequired: state.matches('LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED'),
-    isNonExistingCustomer: state.matches('LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER')
+    isAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED'),
+    isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER')
   }
 
-
-
-  return { lookup, ...states }
+  return { lookup, ...states, customer: state.context.customer }
 }

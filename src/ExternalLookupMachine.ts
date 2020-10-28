@@ -51,8 +51,18 @@ const sendLookupSuccessEvent =
     data: event.data.externalCustomerLookup
   }));
 
+const storeEmail = assign<ExternalLookupContext, LookupEvents>({
+  customer: (context, event) => ({
+    ...context.customer,
+    email: event.data.key
+  })
+})
+
 const saveCustomer = assign<ExternalLookupContext, LookupEvents>({
-  customer: (_, event) => ({ ...event.data.customer })
+  customer: (context, event) => ({
+    ...context.customer,
+    ...event.data.customer
+  })
 })
 
 const saveToken = assign<ExternalLookupContext, LookupEvents>({
@@ -83,12 +93,13 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
       initial: 'LOOKUP_LOADING',
       states: {
         LOOKUP_LOADING: {
+          entry: 'storeEmail',
           invoke: {
             id: 'invoke_lookup',
             src: 'externalLookup',
             onDone: {
               target: 'LOOKUP_SUCCESS',
-              actions: 'sendLookupSuccessEvent'
+              actions: ['sendLookupSuccessEvent']
             },
             onError: '#LOOKUP.LOOKUP_FAILED'
           },
@@ -96,15 +107,14 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
         LOOKUP_FAILED: {},
         LOOKUP_SUCCESS: {
           id: 'LOOKUP_SUCCESS',
+          entry: 'saveCustomer',
           on: {
-            [EVENTS.ACTIVATION_REQUIRED]: {
-              target: 'LOOKUP_SUCCESS.ACTIVATION_REQUIRED',
-              actions: 'saveCustomer'
-            },
+            [EVENTS.ACTIVATION_REQUIRED]: 'LOOKUP_SUCCESS.ACTIVATION_REQUIRED',
             [EVENTS.PREEXISTING_CUSTOMER]: 'LOOKUP_SUCCESS.PREEXISTING_CUSTOMER',
-            [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: {},
-            [EVENTS.NON_EXISTING_CUSTOMER]: {},
+            [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: 'LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED',
+            [EVENTS.NON_EXISTING_CUSTOMER]: 'LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER',
           },
+
           states: {
             // CALL ACTIVATEEXTERNALCUSTOMERBYID
             ACTIVATION_REQUIRED: {
@@ -113,7 +123,7 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
                 src: 'activateExternalId',
                 onDone: {
                   actions: 'saveToken',
-                  target: '#LOGIN'
+                  target: '#ExternalLookupMachine.LOGIN'
                 },
                 onError: {
                   target: '#LOOKUP.LOOKUP_FAILED'
@@ -125,7 +135,9 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
               type: 'final'
             },
             // PRE POPULATE SIGNUP FORM WITH EXISTING DATA
-            ADDITIONAL_USER_DATA_REQUIRED: {},
+            ADDITIONAL_USER_DATA_REQUIRED: {
+              type: 'final'
+            },
             // CALL PERSONLOOKUP -> PRE POPULATE SIGNUP FORM (TO BE CONTINUED)
             // REDIRECT TO SIGNUP
             NON_EXISTING_CUSTOMER: {
@@ -169,6 +181,7 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
       sendLookupSuccessEvent,
       saveCustomer,
       saveToken,
-      resetCustomer
+      resetCustomer,
+      storeEmail
     }
   });
