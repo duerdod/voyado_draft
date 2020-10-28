@@ -1,27 +1,5 @@
 import { Machine, assign, send } from 'xstate';
 
-export const STATES = {
-  IDLE: 'IDLE',
-  LOOKUP: {
-    NODE_NAME: 'LOOKUP',
-    LOOKUP_LOADING: 'LOOKUP_LOADING',
-    LOOKUP_FAILED: 'LOOKUP_FAILED',
-    LOOKUP_SUCCESS: {
-      NODE_NAME: 'LOOKUP_SUCCESS',
-      ACTIVATION_REQUIRED: 'ACTIVATION_REQUIRED',
-      PREEXISTING_CUSTOMER: 'PREEXISTING_CUSTOMER',
-      ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
-      NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
-    }
-  },
-  LOGIN: {
-    NODE_NAME: 'LOGIN',
-    LOADING: 'LOADING',
-    SUCCESS: 'SUCCESS',
-    FAILURE: 'FAILURE'
-  }
-}
-
 const EVENTS = {
   ACTIVATION_REQUIRED: 'ACTIVATION_REQUIRED',
   PREEXISTING_CUSTOMER: 'PREEXISTING_CUSTOMER',
@@ -97,7 +75,7 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
   states: {
     IDLE: {
       on: {
-        DO_LOOKUP: STATES.LOOKUP.NODE_NAME
+        DO_LOOKUP: 'LOOKUP'
       }
     },
     LOOKUP: {

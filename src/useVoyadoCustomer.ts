@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { ExternalLookupMachine, STATES } from './ExternalLookupMachine'
+import { ExternalLookupMachine } from './ExternalLookupMachine'
 import { useApolloClient } from '@apollo/react-hooks';
 import useAuth from '@jetshop/core/components/AuthContext/useAuth';
 
@@ -52,14 +52,14 @@ export function useVoyadoCustomer() {
     send({ type: 'DO_LOOKUP', data: { key } })
   }
 
-  console.log('node', state.value)
-
   const states = {
-    // isActivationRequired: state.matches(STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED),
-    // isPreExisting: state.matches(STATES.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER),
-    // isAdditionalDataRequired: state.matches(STATES.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED),
-    // isNonExistingCustomer: state.matches(STATES.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER)
+    isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION_REQUIRED'),
+    isPreExisting: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER'),
+    isAdditionalDataRequired: state.matches('LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED'),
+    isNonExistingCustomer: state.matches('LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER')
   }
+
+
 
   return { lookup, ...states }
 }
