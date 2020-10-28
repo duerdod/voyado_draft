@@ -23,16 +23,28 @@ export function useExternalCustomer() {
     }).then(({ data }) => data)
   }
 
-  return { externalLookup, activateExternalId }
+  function login(context) {
+    return new Promise((resolve, reject) => {
+      if (context.customer?.token) {
+        logIn(context.customer.token)
+        resolve()
+      } else {
+        reject()
+      }
+    })
+  }
+
+  return { externalLookup, activateExternalId, login }
 }
 
 export function useVoyadoCustomer() {
-  const { externalLookup, activateExternalId } = useExternalCustomer()
+  const { externalLookup, activateExternalId, login } = useExternalCustomer()
 
   const [state, send] = useMachine(ExternalLookupMachine, {
     services: {
       externalLookup,
-      activateExternalId
+      activateExternalId,
+      login
     }
   })
 
@@ -40,7 +52,7 @@ export function useVoyadoCustomer() {
     send({ type: 'DO_LOOKUP', data: { key } })
   }
 
-  console.log(state.context)
+  console.log('node', state.value)
 
   const states = {
     isActivationRequired: state.matches(STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED),

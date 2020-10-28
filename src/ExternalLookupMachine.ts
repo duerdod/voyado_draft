@@ -11,6 +11,11 @@ export const STATES = {
     ADDITIONAL_USER_DATA_REQUIRED: 'LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED',
     NON_EXISTING_CUSTOMER: 'LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER',
   },
+  LOGIN: {
+    LOADING: 'LOADING',
+    SUCCESS: 'SUCCESS',
+    FAILURE: 'FAILURE'
+  }
 }
 
 const EVENTS = {
@@ -37,6 +42,13 @@ interface ExternalLookupSchema {
       }
     }
     LOOKUP_FAILED: {}
+    LOGIN: {
+      states: {
+        LOADING: {}
+        SUCCESS: {}
+        FAILURE: {}
+      }
+    }
   }
 };
 
@@ -62,6 +74,10 @@ const saveToken = assign<ExternalLookupContext, LookupEvents>({
     ...context.customer,
     token: event.data.activateExternalCustomerById.token.value
   })
+})
+
+const resetCustomer = assign<ExternalLookupContext, LookupEvents>({
+  customer: () => null
 })
 
 export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLookupSchema, LookupEvents>({
@@ -104,7 +120,11 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
             id: 'ACTIVATION_REQUIRED',
             src: 'activateExternalId',
             onDone: {
-              actions: 'saveToken'
+              actions: 'saveToken',
+              target: `#LOGIN`
+            },
+            onError: {
+              target: `#ExternalLookupMachine.${STATES.LOOKUP_FAILED}`
             }
           },
         },
@@ -121,12 +141,44 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
         },
       }
     },
-    LOOKUP_FAILED: {}
+    LOOKUP_FAILED: {
+      always: {
+        target: STATES.IDLE
+      }
+    },
+    LOGIN: {
+      id: 'LOGIN',
+      initial: 'LOADING',
+      states: {
+        LOADING: {
+          invoke: {
+            id: 'LOADING',
+            src: 'login',
+            onDone: {
+              target: 'SUCCESS',
+            },
+            onError: {
+              target: 'FAILURE', //STATES.LOGIN.FAILURE,
+              actions: 'resetCustomer'
+            }
+          }
+        },
+        SUCCESS: {
+          type: 'final'
+        },
+        FAILURE: {
+          always: {
+            target: '#ExternalLookupMachine.IDLE'
+          }
+        }
+      }
+    }
   }
 }, {
   actions: {
     sendLookupSuccessEvent,
     saveCustomer,
-    saveToken
+    saveToken,
+    resetCustomer
   }
 });
