@@ -55,10 +55,10 @@ export function useVoyadoCustomer() {
   console.log('node', state.value)
 
   const states = {
-    isActivationRequired: state.matches(STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED),
-    isPreExisting: state.matches(STATES.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER),
-    isAdditionalDataRequired: state.matches(STATES.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED),
-    isNonExistingCustomer: state.matches(STATES.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER)
+    // isActivationRequired: state.matches(STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED),
+    // isPreExisting: state.matches(STATES.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER),
+    // isAdditionalDataRequired: state.matches(STATES.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED),
+    // isNonExistingCustomer: state.matches(STATES.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER)
   }
 
   return { lookup, ...states }

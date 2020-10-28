@@ -2,16 +2,20 @@ import { Machine, assign, send } from 'xstate';
 
 export const STATES = {
   IDLE: 'IDLE',
-  LOOKUP: 'LOOKUP',
-  LOOKUP_FAILED: 'LOOKUP_FAILED',
-  LOOKUP_SUCCESS: {
-    LOOKUP_SUCCESS: 'LOOKUP_SUCCESS',
-    ACTIVATION_REQUIRED: 'LOOKUP_SUCCESS.ACTIVATION_REQUIRED',
-    PREEXISTING_CUSTOMER: 'LOOKUP_SUCCESS.PREEXISTING_CUSTOMER',
-    ADDITIONAL_USER_DATA_REQUIRED: 'LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED',
-    NON_EXISTING_CUSTOMER: 'LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER',
+  LOOKUP: {
+    NODE_NAME: 'LOOKUP',
+    LOOKUP_LOADING: 'LOOKUP_LOADING',
+    LOOKUP_FAILED: 'LOOKUP_FAILED',
+    LOOKUP_SUCCESS: {
+      NODE_NAME: 'LOOKUP_SUCCESS',
+      ACTIVATION_REQUIRED: 'ACTIVATION_REQUIRED',
+      PREEXISTING_CUSTOMER: 'PREEXISTING_CUSTOMER',
+      ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
+      NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
+    }
   },
   LOGIN: {
+    NODE_NAME: 'LOGIN',
     LOADING: 'LOADING',
     SUCCESS: 'SUCCESS',
     FAILURE: 'FAILURE'
@@ -32,16 +36,20 @@ interface ExternalLookupContext {
 interface ExternalLookupSchema {
   states: {
     IDLE: {}
-    LOOKUP: {}
-    LOOKUP_SUCCESS: {
+    LOOKUP: {
       states: {
-        ACTIVATION_REQUIRED: {}
-        PREEXISTING_CUSTOMER: {}
-        ADDITIONAL_USER_DATA_REQUIRED: {}
-        NON_EXISTING_CUSTOMER: {}
+        LOOKUP_LOADING: {}
+        LOOKUP_FAILED: {}
+        LOOKUP_SUCCESS: {
+          states: {
+            ACTIVATION_REQUIRED: {}
+            PREEXISTING_CUSTOMER: {}
+            ADDITIONAL_USER_DATA_REQUIRED: {}
+            NON_EXISTING_CUSTOMER: {}
+          }
+        }
       }
     }
-    LOOKUP_FAILED: {}
     LOGIN: {
       states: {
         LOADING: {}
@@ -89,61 +97,64 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
   states: {
     IDLE: {
       on: {
-        DO_LOOKUP: 'LOOKUP'
+        DO_LOOKUP: STATES.LOOKUP.NODE_NAME
       }
     },
     LOOKUP: {
-      invoke: {
-        id: 'INVOKE_LOOKUP',
-        src: 'externalLookup',
-        onDone: {
-          target: 'LOOKUP_SUCCESS',
-          actions: 'sendLookupSuccessEvent'
-        },
-        onError: 'LOOKUP_FAILED'
-      }
-    },
-    LOOKUP_SUCCESS: {
-      on: {
-        [EVENTS.ACTIVATION_REQUIRED]: {
-          target: STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED,
-          actions: 'saveCustomer'
-        },
-        [EVENTS.PREEXISTING_CUSTOMER]: STATES.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER,
-        [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: STATES.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED,
-        [EVENTS.NON_EXISTING_CUSTOMER]: STATES.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER,
-      },
+      id: 'LOOKUP',
+      initial: 'LOOKUP_LOADING',
       states: {
-        // CALL ACTIVATEEXTERNALCUSTOMERBYID
-        ACTIVATION_REQUIRED: {
+        LOOKUP_LOADING: {
           invoke: {
-            id: 'ACTIVATION_REQUIRED',
-            src: 'activateExternalId',
+            id: 'invoke_lookup',
+            src: 'externalLookup',
             onDone: {
-              actions: 'saveToken',
-              target: `#LOGIN`
+              target: 'LOOKUP_SUCCESS',
+              actions: 'sendLookupSuccessEvent'
             },
-            onError: {
-              target: `#ExternalLookupMachine.${STATES.LOOKUP_FAILED}`
-            }
+            onError: '#LOOKUP.LOOKUP_FAILED'
           },
         },
-        // REDIRECT TO LOGIN / CONDITIONALLY SHOW LOGIN FORM
-        PREEXISTING_CUSTOMER: {
-          type: 'final'
-        },
-        // PRE POPULATE SIGNUP FORM WITH EXISTING DATA
-        ADDITIONAL_USER_DATA_REQUIRED: {},
-        // CALL PERSONLOOKUP -> PRE POPULATE SIGNUP FORM (TO BE CONTINUED)
-        // REDIRECT TO SIGNUP
-        NON_EXISTING_CUSTOMER: {
-          type: 'final'
-        },
-      }
-    },
-    LOOKUP_FAILED: {
-      always: {
-        target: STATES.IDLE
+        LOOKUP_FAILED: {},
+        LOOKUP_SUCCESS: {
+          id: 'LOOKUP_SUCCESS',
+          on: {
+            [EVENTS.ACTIVATION_REQUIRED]: {
+              target: 'LOOKUP_SUCCESS.ACTIVATION_REQUIRED',
+              actions: 'saveCustomer'
+            },
+            [EVENTS.PREEXISTING_CUSTOMER]: 'LOOKUP_SUCCESS.PREEXISTING_CUSTOMER',
+            [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: {},
+            [EVENTS.NON_EXISTING_CUSTOMER]: {},
+          },
+          states: {
+            // CALL ACTIVATEEXTERNALCUSTOMERBYID
+            ACTIVATION_REQUIRED: {
+              invoke: {
+                id: 'invoke_activation',
+                src: 'activateExternalId',
+                onDone: {
+                  actions: 'saveToken',
+                  target: '#LOGIN'
+                },
+                onError: {
+                  target: '#LOOKUP.LOOKUP_FAILED'
+                }
+              },
+            },
+            // REDIRECT TO LOGIN / CONDITIONALLY SHOW LOGIN FORM WITH STATE MATCHES
+            PREEXISTING_CUSTOMER: {
+              type: 'final'
+            },
+            // PRE POPULATE SIGNUP FORM WITH EXISTING DATA
+            ADDITIONAL_USER_DATA_REQUIRED: {},
+            // CALL PERSONLOOKUP -> PRE POPULATE SIGNUP FORM (TO BE CONTINUED)
+            // REDIRECT TO SIGNUP
+            NON_EXISTING_CUSTOMER: {
+              type: 'final'
+            },
+          }
+        }
       }
     },
     LOGIN: {
@@ -152,13 +163,13 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
       states: {
         LOADING: {
           invoke: {
-            id: 'LOADING',
+            id: 'invoke_login',
             src: 'login',
             onDone: {
               target: 'SUCCESS',
             },
             onError: {
-              target: 'FAILURE', //STATES.LOGIN.FAILURE,
+              target: 'FAILURE',
               actions: 'resetCustomer'
             }
           }
@@ -174,11 +185,12 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
       }
     }
   }
-}, {
-  actions: {
-    sendLookupSuccessEvent,
-    saveCustomer,
-    saveToken,
-    resetCustomer
-  }
-});
+},
+  {
+    actions: {
+      sendLookupSuccessEvent,
+      saveCustomer,
+      saveToken,
+      resetCustomer
+    }
+  });
