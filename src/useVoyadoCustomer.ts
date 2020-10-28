@@ -1,33 +1,46 @@
 import { useMachine } from '@xstate/react';
 import { ExternalLookupMachine, STATES } from './ExternalLookupMachine'
 import { useApolloClient } from '@apollo/react-hooks';
+import useAuth from '@jetshop/core/components/AuthContext/useAuth';
 
 import ExternalLookupQuery from './ExternalLookupQuery.gql'
+import ActivateExternalId from './ActivateExternalId.gql'
 
 export function useExternalCustomer() {
   const client = useApolloClient()
-  function doExternalLookup(_, event) {
+  const { logIn } = useAuth()
+  function externalLookup(_, event) {
     return client.query({
       query: ExternalLookupQuery,
       variables: { key: event.data.key }
     }).then(({ data }) => data)
   }
 
-  return { doExternalLookup }
+  function activateExternalId(context) {
+    return client.mutate({
+      mutation: ActivateExternalId,
+      variables: { input: { externalCustomerId: context.customer.externalId } }
+    }).then(({ data }) => data)
+  }
+
+  return { externalLookup, activateExternalId }
 }
 
 export function useVoyadoCustomer() {
-  const { doExternalLookup } = useExternalCustomer()
+  const { externalLookup, activateExternalId } = useExternalCustomer()
 
   const [state, send] = useMachine(ExternalLookupMachine, {
     services: {
-      doExternalLookup
+      externalLookup,
+      activateExternalId
     }
   })
 
   const lookup = (key?: string) => {
     send({ type: 'DO_LOOKUP', data: { key } })
   }
+
+  console.log(state.context)
 
   const states = {
     isActivationRequired: state.matches(STATES.LOOKUP_SUCCESS.ACTIVATION_REQUIRED),

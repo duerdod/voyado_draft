@@ -1,0 +1,8 @@
+mutation ActivateExternalId($input: ActivateExternalCustomerByIdInput!) {
+  activateExternalCustomerById(input: $input) {
+    success
+    token {
+      value
+    }
+  }
+}
