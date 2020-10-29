@@ -4,7 +4,14 @@ const EVENTS = {
   ACTIVATION_REQUIRED: 'ACTIVATION_REQUIRED',
   PREEXISTING_CUSTOMER: 'PREEXISTING_CUSTOMER',
   ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
-  NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER'
+  NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
+}
+
+const STATES = {
+  ACTIVATION_REQUIRED: '#ACTIVATION',
+  PREEXISTING_CUSTOMER: '#PREEXISTING',
+  ADDITIONAL_USER_DATA_REQUIRED: '#ADDITIONAL_DATA',
+  NON_EXISTING_CUSTOMER: '#NON_EXISTING',
 }
 
 export const defaultContext: Partial<ExternalLookupContext> = {
@@ -16,7 +23,7 @@ export interface ExternalLookupContext {
   activateOnLookup: boolean
 };
 
-interface ExternalLookupSchema {
+export interface ExternalLookupSchema {
   states: {
     IDLE: {}
     LOOKUP: {
@@ -51,7 +58,7 @@ interface ExternalLookupSchema {
   }
 }
 
-type LookupEvents =
+export type LookupEvents =
   | { type: 'DO_LOOKUP', data: { key?: string } }
   | { type: 'ACTIVATION_REQUIRED', data: any }
   | { type: 'PREEXISTING_CUSTOMER', data: any }
@@ -61,27 +68,35 @@ type LookupEvents =
   | { type: 'RETRY', data?: any }
 
 const sendLookupSuccessEvent =
-  send((_: ExternalLookupContext, event: LookupEvents) => ({
+  send((_: any, event: LookupEvents) => ({
     type: event.data.externalCustomerLookup.status,
     data: event.data.externalCustomerLookup
-  }));
+  }))
 
 const storeEmail = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context, event) => ({
+  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
     ...context.customer,
     email: event.data.key
   })
 })
 
 const storeCustomer = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context, event) => ({
+  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
     ...context.customer,
     ...event.data.externalCustomerLookup.customer
   })
 })
 
+const storeLookupData = assign<ExternalLookupContext, LookupEvents>({
+  customer: (_: any, event: LookupEvents) => {
+    if (event?.data?.personLookup) {
+      return { ...event.data.personLookup }
+    }
+  }
+})
+
 const storeToken = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context, event) => ({
+  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
     ...context.customer,
     token: event.data.activateExternalCustomerById.token.value
   })
@@ -127,10 +142,10 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
           states: {
             STATUS_RESPONSE: {
               on: {
-                ACTIVATION_REQUIRED: '#ACTIVATION',
-                PREEXISTING_CUSTOMER: '#PREEXISTING',
-                ADDITIONAL_USER_DATA_REQUIRED: '#ADDITIONAL_DATA',
-                NON_EXISTING_CUSTOMER: '#NON_EXISTING',
+                [EVENTS.ACTIVATION_REQUIRED]: STATES.ACTIVATION_REQUIRED,
+                [EVENTS.PREEXISTING_CUSTOMER]: STATES.PREEXISTING_CUSTOMER,
+                [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: STATES.ADDITIONAL_USER_DATA_REQUIRED,
+                [EVENTS.NON_EXISTING_CUSTOMER]: STATES.NON_EXISTING_CUSTOMER
               },
             },
             // Account needs activation. Then can login.
@@ -139,6 +154,10 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
               initial: 'ACTIVATION_REQUIRED',
               states: {
                 ACTIVATION_REQUIRED: {
+                  always: {
+                    target: 'ACTIVATION_LOADING',
+                    cond: (c) => c.activateOnLookup
+                  },
                   on: {
                     ACTIVATE_CUSTOMER: 'ACTIVATION_LOADING'
                   }
@@ -174,14 +193,33 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
               id: 'ADDITIONAL_DATA',
               type: 'final'
             },
+            // Customer does not exist. Try fetch required information.
             NON_EXISTING: {
               id: 'NON_EXISTING',
               initial: 'NON_EXISTING_CUSTOMER',
               states: {
-                NON_EXISTING_CUSTOMER: {},
-                PERSON_LOOKUP_LOADING: {},
-                PERSON_LOOKUP_SUCCESS: {},
-                PERSON_LOOKUP_FAILED: {}
+                NON_EXISTING_CUSTOMER: {
+                  always: {
+                    target: 'PERSON_LOOKUP_LOADING'
+                  }
+                },
+                PERSON_LOOKUP_LOADING: {
+                  invoke: {
+                    id: 'fetch_person_lookupdata',
+                    src: 'personLookup',
+                    onDone: {
+                      target: 'PERSON_LOOKUP_SUCCESS'
+                    },
+                    onError: 'PERSON_LOOKUP_FAILED'
+                  },
+                  exit: 'storeLookupData'
+                },
+                PERSON_LOOKUP_SUCCESS: {
+                  type: 'final'
+                },
+                PERSON_LOOKUP_FAILED: {
+                  type: 'final'
+                }
               }
             },
           }
@@ -194,6 +232,7 @@ export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLook
     sendLookupSuccessEvent,
     storeEmail,
     storeCustomer,
-    storeToken
+    storeToken,
+    storeLookupData
   }
 })

@@ -1,6 +1,8 @@
 import { useMachine } from '@xstate/react';
-import { ExternalLookupMachine, ExternalLookupContext } from './ExternalLookupMachine'
+import { ExternalLookupMachine, ExternalLookupContext, LookupEvents } from './ExternalLookup'
 import { useApolloClient } from '@apollo/react-hooks';
+import { QueryResult, MutationResult } from '@apollo/react-common'
+import { PersonLookup, ExternalCustomerResult, ActivateExternalCustomerByIdResult } from '@jetshop/core/types';
 
 import ExternalLookupQuery from './ExternalLookupQuery.gql'
 import ActivateExternalId from './ActivateExternalId.gql'
@@ -18,30 +20,28 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     context: {
       ...settings,
       customer: null
-    },
-    devTools: true
+    }
   })
 
-  function externalLookup(_, event) {
-    console.log(event)
+  function externalLookup(_: any, event: LookupEvents) {
     return client.query({
       query: ExternalLookupQuery,
       variables: { key: event.data.key }
-    }).then(({ data }) => data)
+    }).then(({ data }: { data: QueryResult<{ ExternalLookupQuery: ExternalCustomerResult }> }) => data)
   }
 
-  function personLookup(context) {
+  function personLookup(context: ExternalLookupContext) {
     return client.query({
       query: LookupQuery,
       variables: { key: context.customer.email }
-    }).then(({ data }) => data)
+    }).then(({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data)
   }
 
-  function activateExternalId(context) {
+  function activateExternalId(context: ExternalLookupContext) {
     return client.mutate({
       mutation: ActivateExternalId,
       variables: { input: { externalCustomerId: context.customer.externalId } }
-    }).then(({ data }) => data)
+    }).then(({ data }: { data: MutationResult<{ ActivateExternalId: ActivateExternalCustomerByIdResult }> }) => data)
   }
 
   const lookup = (key?: string) => {
@@ -56,16 +56,16 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     send({ type: 'RETRY' })
   }
 
-
   const states = {
     isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_REQUIRED'),
     isActivationPending: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_LOADING'),
     isActivationSuccess: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_SUCCESS'),
     isPreExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING'),
-    IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA')
+    IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA'),
+    isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING'),
+    isPersonLookupPending: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_LOADING'),
+    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS')
   }
-
-  console.log(JSON.stringify(state.value))
 
   return { lookup, activate, retryLookup, ...states, customer: state.context.customer }
 }
