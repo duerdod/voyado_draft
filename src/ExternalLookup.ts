@@ -14,16 +14,17 @@ const STATES = {
   NON_EXISTING_CUSTOMER: '#NON_EXISTING',
 }
 
-export const defaultContext: Partial<ExternalLookupContext> = {
+export const defaultContext: Partial<LookupContext> = {
   activateOnLookup: false
 }
 
-export interface ExternalLookupContext {
+export interface LookupContext {
   customer: any,
   activateOnLookup: boolean
+  activationError: null | string
 };
 
-export interface ExternalLookupSchema {
+export interface LookupSchema {
   states: {
     IDLE: {}
     LOOKUP: {
@@ -73,21 +74,21 @@ const sendLookupSuccessEvent =
     data: event.data.externalCustomerLookup
   }))
 
-const storeEmail = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
+const storeEmail = assign<LookupContext, LookupEvents>({
+  customer: (context: LookupContext, event: LookupEvents) => ({
     ...context.customer,
     email: event.data.key
   })
 })
 
-const storeCustomer = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
+const storeCustomer = assign<LookupContext, LookupEvents>({
+  customer: (context: LookupContext, event: LookupEvents) => ({
     ...context.customer,
     ...event.data.externalCustomerLookup.customer
   })
 })
 
-const storeLookupData = assign<ExternalLookupContext, LookupEvents>({
+const storeLookupData = assign<LookupContext, LookupEvents>({
   customer: (_: any, event: LookupEvents) => {
     if (event?.data?.personLookup) {
       return { ...event.data.personLookup }
@@ -95,17 +96,18 @@ const storeLookupData = assign<ExternalLookupContext, LookupEvents>({
   }
 })
 
-const storeToken = assign<ExternalLookupContext, LookupEvents>({
-  customer: (context: ExternalLookupContext, event: LookupEvents) => ({
+const storeToken = assign<LookupContext, LookupEvents>({
+  customer: (context: LookupContext, event: LookupEvents) => ({
     ...context.customer,
     token: event.data.activateExternalCustomerById.token.value
   })
 })
 
-export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLookupSchema, LookupEvents>({
+export const ExternalLookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>({
   id: 'ExternalLookup',
   initial: 'IDLE',
   context: {
+    activationError: null,
     activateOnLookup: false,
     customer: null
   },

@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { ExternalLookupMachine, ExternalLookupContext, LookupEvents } from './ExternalLookup'
+import { ExternalLookupMachine, LookupContext, LookupEvents } from './ExternalLookup'
 import { useApolloClient } from '@apollo/react-hooks';
 import { QueryResult, MutationResult } from '@apollo/react-common'
 import { PersonLookup, ExternalCustomerResult, ActivateExternalCustomerByIdResult } from '@jetshop/core/types';
@@ -8,7 +8,7 @@ import ExternalLookupQuery from './ExternalLookupQuery.gql'
 import ActivateExternalId from './ActivateExternalId.gql'
 import LookupQuery from './LookupQuery.gql'
 
-export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
+export function useVoyadoLookup(settings: Partial<LookupContext>) {
   const client = useApolloClient()
 
   const [state, send] = useMachine(ExternalLookupMachine, {
@@ -30,14 +30,14 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     }).then(({ data }: { data: QueryResult<{ ExternalLookupQuery: ExternalCustomerResult }> }) => data)
   }
 
-  function personLookup(context: ExternalLookupContext) {
+  function personLookup(context: LookupContext) {
     return client.query({
       query: LookupQuery,
       variables: { key: context.customer.email }
     }).then(({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data)
   }
 
-  function activateExternalId(context: ExternalLookupContext) {
+  function activateExternalId(context: LookupContext) {
     return client.mutate({
       mutation: ActivateExternalId,
       variables: { input: { externalCustomerId: context.customer.externalId } }
@@ -64,7 +64,10 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA'),
     isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING'),
     isPersonLookupPending: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_LOADING'),
-    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS')
+    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS'),
+    activationError: {
+
+    }
   }
 
   return { lookup, activate, retryLookup, ...states, customer: state.context.customer }
