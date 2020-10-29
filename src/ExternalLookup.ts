@@ -103,8 +103,12 @@ const storeToken = assign<LookupContext, LookupEvents>({
   })
 })
 
-export const ExternalLookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>({
-  id: 'ExternalLookup',
+const setActivationError = assign<LookupContext, LookupEvents>({
+  activationError: () => ''
+})
+
+export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>({
+  id: 'LookupMachine',
   initial: 'IDLE',
   context: {
     activationError: null,
@@ -179,6 +183,7 @@ export const ExternalLookupMachine = Machine<LookupContext, LookupSchema, Lookup
                   type: 'final'
                 },
                 ACTIVATION_FAILED: {
+                  entry: 'setActivationError',
                   on: {
                     RETRY: '#IDLE'
                   }
@@ -232,6 +237,7 @@ export const ExternalLookupMachine = Machine<LookupContext, LookupSchema, Lookup
 }, {
   actions: {
     sendLookupSuccessEvent,
+    setActivationError,
     storeEmail,
     storeCustomer,
     storeToken,

@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { ExternalLookupMachine, LookupContext, LookupEvents } from './ExternalLookup'
+import { LookupMachine, LookupContext, LookupEvents } from './ExternalLookup'
 import { useApolloClient } from '@apollo/react-hooks';
 import { QueryResult, MutationResult } from '@apollo/react-common'
 import { PersonLookup, ExternalCustomerResult, ActivateExternalCustomerByIdResult } from '@jetshop/core/types';
@@ -11,7 +11,7 @@ import LookupQuery from './LookupQuery.gql'
 export function useVoyadoLookup(settings: Partial<LookupContext>) {
   const client = useApolloClient()
 
-  const [state, send] = useMachine(ExternalLookupMachine, {
+  const [state, send] = useMachine(LookupMachine, {
     services: {
       externalLookup,
       activateExternalId,
@@ -66,7 +66,8 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
     isPersonLookupPending: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_LOADING'),
     hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS'),
     activationError: {
-
+      customerNotFound: state.context.activationError,
+      customerAlreadyActivated: state.context.activationError,
     }
   }
 
