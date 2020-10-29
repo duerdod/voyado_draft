@@ -1,0 +1,32 @@
+query LookupQuery($key: String!) {
+  personLookup(key: $key) {
+    firstName {
+      encrypted
+      masked
+    }
+    lastName {
+      encrypted
+      masked
+    }
+    address {
+      encrypted
+      masked
+    }
+    postalCode {
+      encrypted
+      masked
+    }
+    mobilePhoneNumber {
+      encrypted
+      masked
+    }
+    city {
+      encrypted
+      masked
+    }
+    co {
+      encrypted
+      masked
+    }
+  }
+}
