@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { ExternalLookupMachine, ExternalLookupContext, defaultContext } from './ExternalLookupMachine'
+import { ExternalLookupMachine, ExternalLookupContext } from './ExternalLookupMachine'
 import { useApolloClient } from '@apollo/react-hooks';
 
 import ExternalLookupQuery from './ExternalLookupQuery.gql'
@@ -18,10 +18,12 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     context: {
       ...settings,
       customer: null
-    }
+    },
+    devTools: true
   })
 
   function externalLookup(_, event) {
+    console.log(event)
     return client.query({
       query: ExternalLookupQuery,
       variables: { key: event.data.key }
@@ -50,19 +52,20 @@ export function useVoyadoLookup(settings: Partial<ExternalLookupContext>) {
     send({ type: 'ACTIVATE_CUSTOMER' })
   }
 
-
-  const states = {
-    isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION_REQUIRED'),
-    isPreExisting: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING_CUSTOMER'),
-    isAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED'),
-    isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER'),
-    isCustomerInActivation: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION_REQUIRED.ACTIVATING_CUSTOMER'),
-    isCustomerActivated: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION_REQUIRED.CUSTOMER_ACTIVATED'),
-    isInPersonLookup: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER.PERSON_LOOKUP_LOADING'),
-    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER.PERSON_LOOKUP_SUCCESS'),
+  const retryLookup = () => {
+    send({ type: 'RETRY' })
   }
 
-  console.log(states)
 
-  return { lookup, activate, ...states, customer: state.context.customer }
+  const states = {
+    isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_REQUIRED'),
+    isActivationPending: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_LOADING'),
+    isActivationSuccess: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_SUCCESS'),
+    isPreExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING'),
+    IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA')
+  }
+
+  console.log(JSON.stringify(state.value))
+
+  return { lookup, activate, retryLookup, ...states, customer: state.context.customer }
 }

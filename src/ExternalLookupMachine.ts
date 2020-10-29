@@ -25,28 +25,31 @@ interface ExternalLookupSchema {
         LOOKUP_FAILED: {}
         LOOKUP_SUCCESS: {
           states: {
-            ACTIVATION_REQUIRED: {
+            STATUS_RESPONSE: {}
+            ACTIVATION: {
               states: {
-                ACTIVATING_CUSTOMER: {}
-                CUSTOMER_ACTIVATED: {}
-                FAILED_ACTIVATING_CUSTOMER: {}
+                ACTIVATION_REQUIRED: {}
+                ACTIVATION_LOADING: {}
+                ACTIVATION_SUCCESS: {}
+                ACTIVATION_FAILED: {}
               }
             }
-            PREEXISTING_CUSTOMER: {}
-            ADDITIONAL_USER_DATA_REQUIRED: {}
-            NON_EXISTING_CUSTOMER: {
+            ADDITIONAL_DATA: {}
+            PREEXISTING: {}
+            NON_EXISTING: {
               states: {
+                NON_EXISTING_CUSTOMER: {}
                 PERSON_LOOKUP_LOADING: {}
                 PERSON_LOOKUP_SUCCESS: {}
                 PERSON_LOOKUP_FAILED: {}
               }
             }
           }
-        },
+        }
       }
     }
   }
-};
+}
 
 type LookupEvents =
   | { type: 'DO_LOOKUP', data: { key?: string } }
@@ -55,6 +58,7 @@ type LookupEvents =
   | { type: 'ADDITIONAL_USER_DATA_REQUIRED', data: any }
   | { type: 'NON_EXISTING_CUSTOMER', data: any }
   | { type: 'ACTIVATE_CUSTOMER', data?: any }
+  | { type: 'RETRY', data?: any }
 
 const sendLookupSuccessEvent =
   send((_: ExternalLookupContext, event: LookupEvents) => ({
@@ -72,7 +76,7 @@ const storeEmail = assign<ExternalLookupContext, LookupEvents>({
 const storeCustomer = assign<ExternalLookupContext, LookupEvents>({
   customer: (context, event) => ({
     ...context.customer,
-    ...event.data.customer
+    ...event.data.externalCustomerLookup.customer
   })
 })
 
@@ -83,128 +87,113 @@ const storeToken = assign<ExternalLookupContext, LookupEvents>({
   })
 })
 
-const resetCustomer = assign<ExternalLookupContext, LookupEvents>({
-  customer: () => null
-})
-
 export const ExternalLookupMachine = Machine<ExternalLookupContext, ExternalLookupSchema, LookupEvents>({
   id: 'ExternalLookup',
   initial: 'IDLE',
   context: {
-    customer: null,
-    activateOnLookup: false
+    activateOnLookup: false,
+    customer: null
   },
   states: {
     IDLE: {
+      id: 'IDLE',
       on: {
         DO_LOOKUP: 'LOOKUP'
       }
     },
     LOOKUP: {
-      id: 'LOOKUP',
+      entry: 'storeEmail',
       initial: 'LOOKUP_LOADING',
       states: {
         LOOKUP_LOADING: {
-          entry: 'storeEmail',
           invoke: {
-            id: 'invoke_lookup',
+            id: 'fetchLookupStatus',
             src: 'externalLookup',
             onDone: {
               target: 'LOOKUP_SUCCESS',
               actions: ['sendLookupSuccessEvent']
             },
             onError: 'LOOKUP_FAILED'
-          },
+          }
         },
         LOOKUP_FAILED: {
-          entry: () => console.log('LOOKUP FAILED!!!')
+          on: {
+            RETRY: '#IDLE'
+          }
         },
         LOOKUP_SUCCESS: {
-          id: 'LOOKUP_SUCCESS',
+          initial: 'STATUS_RESPONSE',
           entry: 'storeCustomer',
-          on: {
-            [EVENTS.ACTIVATION_REQUIRED]: 'LOOKUP_SUCCESS.ACTIVATION_REQUIRED',
-            [EVENTS.PREEXISTING_CUSTOMER]: 'LOOKUP_SUCCESS.PREEXISTING_CUSTOMER',
-            [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: 'LOOKUP_SUCCESS.ADDITIONAL_USER_DATA_REQUIRED',
-            [EVENTS.NON_EXISTING_CUSTOMER]: 'LOOKUP_SUCCESS.NON_EXISTING_CUSTOMER',
-          },
-
           states: {
-            // CALL ACTIVATEEXTERNALCUSTOMERBYID
-            ACTIVATION_REQUIRED: {
-              id: 'ACTIVATION_REQUIRED',
-              always: {
-                cond: (context) => false || context.activateOnLookup, // THIS IS MISSING ITS ORIGINAL TYPE, FOR SOME REASON.
-                target: '#ACTIVATION_REQUIRED.ACTIVATING_CUSTOMER',
-              },
+            STATUS_RESPONSE: {
               on: {
-                ACTIVATE_CUSTOMER: '#ACTIVATION_REQUIRED.ACTIVATING_CUSTOMER'
+                ACTIVATION_REQUIRED: '#ACTIVATION',
+                PREEXISTING_CUSTOMER: '#PREEXISTING',
+                ADDITIONAL_USER_DATA_REQUIRED: '#ADDITIONAL_DATA',
+                NON_EXISTING_CUSTOMER: '#NON_EXISTING',
               },
+            },
+            // Account needs activation. Then can login.
+            ACTIVATION: {
+              id: 'ACTIVATION',
+              initial: 'ACTIVATION_REQUIRED',
               states: {
-                ACTIVATING_CUSTOMER: {
+                ACTIVATION_REQUIRED: {
+                  on: {
+                    ACTIVATE_CUSTOMER: 'ACTIVATION_LOADING'
+                  }
+                },
+                ACTIVATION_LOADING: {
                   invoke: {
-                    id: 'activateCustomer',
+                    id: 'activate-customer-by-externalid',
                     src: 'activateExternalId',
                     onDone: {
                       actions: 'storeToken',
-                      target: 'CUSTOMER_ACTIVATED'
+                      target: 'ACTIVATION_SUCCESS'
                     },
-                    onError: {
-                      target: 'FAILED_ACTIVATING_CUSTOMER'
-                    }
-                  },
+                    onError: 'ACTIVATION_FAILED'
+                  }
                 },
-                CUSTOMER_ACTIVATED: {
+                ACTIVATION_SUCCESS: {
                   type: 'final'
                 },
-                FAILED_ACTIVATING_CUSTOMER: {
-                  always: '#ExternalLookup.IDLE'
+                ACTIVATION_FAILED: {
+                  on: {
+                    RETRY: '#IDLE'
+                  }
                 }
               }
             },
-            // CAN LOGIN
-            PREEXISTING_CUSTOMER: {
+            PREEXISTING: {
+              // Can login.
+              id: 'PREEXISTING',
               type: 'final'
             },
-            // NEEDS ADDITIONAL DATA TO LOGIN
-            ADDITIONAL_USER_DATA_REQUIRED: {
+            ADDITIONAL_DATA: {
+              // Need more data to actually create a customer.
+              id: 'ADDITIONAL_DATA',
               type: 'final'
             },
-            // CALL PERSONLOOKUP
-            NON_EXISTING_CUSTOMER: {
-              initial: 'PERSON_LOOKUP_LOADING',
+            NON_EXISTING: {
+              id: 'NON_EXISTING',
+              initial: 'NON_EXISTING_CUSTOMER',
               states: {
-                PERSON_LOOKUP_LOADING: {
-                  invoke: {
-                    id: 'person_lookup',
-                    src: 'personLookup',
-                    onDone: {
-                      actions: 'storeLookupData',
-                      target: 'PERSON_LOOKUP_SUCCESS'
-                    },
-                    onError: 'PERSON_LOOKUP_FAILED'
-                  }
-                },
-                PERSON_LOOKUP_SUCCESS: {
-                  type: 'final'
-                },
-                PERSON_LOOKUP_FAILED: {
-                  type: 'final'
-                }
+                NON_EXISTING_CUSTOMER: {},
+                PERSON_LOOKUP_LOADING: {},
+                PERSON_LOOKUP_SUCCESS: {},
+                PERSON_LOOKUP_FAILED: {}
               }
             },
           }
         },
-      },
-    },
-  }
-},
-  {
-    actions: {
-      sendLookupSuccessEvent,
-      storeCustomer,
-      storeToken,
-      resetCustomer,
-      storeEmail
+      }
     }
-  });
+  }
+}, {
+  actions: {
+    sendLookupSuccessEvent,
+    storeEmail,
+    storeCustomer,
+    storeToken
+  }
+})
