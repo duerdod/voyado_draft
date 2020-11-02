@@ -1,7 +1,5 @@
-//@ts-nocheck
-
 import { useMachine } from '@xstate/react';
-import { LookupMachine, LookupContext, LookupEvents, defaultContext } from './ExternalLookup';
+import { LookupMachine, LookupContext, LookupEvents } from './ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
 import { QueryResult, MutationResult } from '@apollo/react-common';
 import {
