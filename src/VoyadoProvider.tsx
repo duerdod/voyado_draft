@@ -1,9 +1,15 @@
 import React, { createContext } from 'react';
+import { useGlobalActivation } from './useGlobalActivation';
+import { VoyadoProviderSettings } from './GlobalActivation';
 
 export const VoyadoContext = createContext({});
 
-export const VoyadoProvider: React.FunctionComponent = ({ children }) => (
-  <VoyadoContext.Provider value={{ voyado: true }}>
-    {children}
-  </VoyadoContext.Provider>
-);
+interface VoyadoProviderProps {
+  children: React.ReactNode;
+  settings: VoyadoProviderSettings;
+}
+
+export const VoyadoProvider = (props: VoyadoProviderProps) => {
+  useGlobalActivation(props.settings);
+  return <VoyadoContext.Provider value={{ voyado: true }} {...props} />;
+};
