@@ -1,5 +1,7 @@
+//@ts-nocheck
+
 import { useMachine } from '@xstate/react';
-import { LookupMachine, LookupContext, LookupEvents } from './ExternalLookup';
+import { LookupMachine, LookupContext, LookupEvents, defaultContext } from './ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
 import { QueryResult, MutationResult } from '@apollo/react-common';
 import {
@@ -32,15 +34,9 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
         query: ExternalLookupQuery,
         variables: { key: event.data.key },
       })
-      .then(
-        ({
-          data,
-        }: {
-          data: QueryResult<{ ExternalLookupQuery: ExternalCustomerResult }>;
-        }) => {
-          return data;
-        }
-      );
+      .then(({ data }: { data: QueryResult<{ ExternalLookupQuery: ExternalCustomerResult }> }) => {
+        return data;
+      });
   }
 
   function personLookup(context: LookupContext) {
@@ -49,9 +45,7 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
         query: LookupQuery,
         variables: { key: context.customer.email },
       })
-      .then(
-        ({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data
-      );
+      .then(({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data);
   }
 
   function activateExternalId(context: LookupContext) {
@@ -73,7 +67,7 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
       );
   }
 
-  const lookup = (key?: string) => {
+  const lookup = (key: string) => {
     send({ type: 'DO_LOOKUP', data: { key } });
   };
 
@@ -85,30 +79,22 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
     send({ type: 'RETRY' });
   };
 
+  // Surface API responses.
   const states = {
-    isActivationRequired: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_REQUIRED'
-    ),
-    isActivationPending: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_LOADING'
-    ),
-    isActivationSuccess: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_SUCCESS'
-    ),
+    isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_REQUIRED'),
+    isActivationPending: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_LOADING'),
+    isActivationSuccess: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_SUCCESS'),
     isPreExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING'),
-    IsAdditionalDataRequired: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA'
-    ),
+    IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA'),
     isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING'),
     isPersonLookupPending: state.matches(
       'LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_LOADING'
     ),
-    hasPersonLookupData: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS'
-    ),
-    activationError: {
-      customerNotFound: state.context.activationError,
-      customerAlreadyActivated: state.context.activationError,
+    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS'),
+    error: {
+      lookupError: state.matches('LOOKUP.LOOKUP_FAILED'),
+      activationError: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_FAILED'),
+      errorMessage: state.context.activationError,
     },
   };
 

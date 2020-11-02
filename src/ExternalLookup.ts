@@ -7,7 +7,7 @@ const EVENTS = {
   NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
 };
 
-const STATES = {
+export const STATES = {
   ACTIVATION_REQUIRED: '#ACTIVATION',
   PREEXISTING_CUSTOMER: '#PREEXISTING',
   ADDITIONAL_USER_DATA_REQUIRED: '#ADDITIONAL_DATA',
@@ -82,18 +82,24 @@ const storeEmail = assign<LookupContext, LookupEvents>({
 
 const storeCustomer = assign<LookupContext, LookupEvents>({
   customer: (context: LookupContext, event: LookupEvents) => {
-    return {
-      ...context.customer,
-      ...event.data.externalCustomerLookup.customer,
-      // Since there is a mismatch between SignupInput and ExternalLookup
-      streetName: event.data.externalCustomerLookup.customer.address,
-      mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
-    };
+    if (event.data?.externalCustomerLookup?.customer) {
+      return {
+        ...context.customer,
+        ...event.data.externalCustomerLookup.customer,
+        // Since there is a mismatch between SignupInput and ExternalLookup
+        streetName: event.data.externalCustomerLookup.customer.address,
+        mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
+      };
+    } else {
+      return {
+        ...context.customer,
+      };
+    }
   },
 });
 
 const storeLookupData = assign<LookupContext, LookupEvents>({
-  customer: (_: any, event: LookupEvents) => {
+  customer: (_: LookupContext, event: LookupEvents) => {
     if (event?.data?.personLookup) {
       return { ...event.data.personLookup };
     }
@@ -155,8 +161,7 @@ export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
                 on: {
                   [EVENTS.ACTIVATION_REQUIRED]: STATES.ACTIVATION_REQUIRED,
                   [EVENTS.PREEXISTING_CUSTOMER]: STATES.PREEXISTING_CUSTOMER,
-                  [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]:
-                    STATES.ADDITIONAL_USER_DATA_REQUIRED,
+                  [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: STATES.ADDITIONAL_USER_DATA_REQUIRED,
                   [EVENTS.NON_EXISTING_CUSTOMER]: STATES.NON_EXISTING_CUSTOMER,
                 },
               },
