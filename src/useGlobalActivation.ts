@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import qs from 'qs';
 import {
   createActivationMachine,
@@ -14,9 +12,12 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
 
   const [state] = useMachine(createActivationMachine(providerSettings), {
     context: {
-      externalId,
+      externalId: externalId as string,
     },
   });
 
-  console.log(state);
+  return {
+    externalId,
+    isCoolCustomer: state.context.providerSettings.isCoolCustomer,
+  };
 }

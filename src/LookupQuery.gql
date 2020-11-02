@@ -8,7 +8,7 @@ query LookupQuery($key: String!) {
       encrypted
       masked
     }
-    address {
+    streetname {
       encrypted
       masked
     }

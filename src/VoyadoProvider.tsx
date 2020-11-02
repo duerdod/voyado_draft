@@ -10,6 +10,6 @@ interface VoyadoProviderProps {
 }
 
 export const VoyadoProvider = (props: VoyadoProviderProps) => {
-  useGlobalActivation(props.settings);
-  return <VoyadoContext.Provider value={{ voyado: true }} {...props} />;
+  const values = useGlobalActivation(props.settings);
+  return <VoyadoContext.Provider value={values} {...props} />;
 };

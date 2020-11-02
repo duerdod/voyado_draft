@@ -81,10 +81,15 @@ const storeEmail = assign<LookupContext, LookupEvents>({
 });
 
 const storeCustomer = assign<LookupContext, LookupEvents>({
-  customer: (context: LookupContext, event: LookupEvents) => ({
-    ...context.customer,
-    ...event.data.externalCustomerLookup.customer,
-  }),
+  customer: (context: LookupContext, event: LookupEvents) => {
+    return {
+      ...context.customer,
+      ...event.data.externalCustomerLookup.customer,
+      // Since there is a mismatch between SignupInput and ExternalLookup
+      streetName: event.data.externalCustomerLookup.customer.address,
+      mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
+    };
+  },
 });
 
 const storeLookupData = assign<LookupContext, LookupEvents>({
