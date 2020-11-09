@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { assign, Machine, send, DoneEventObject } from 'xstate';
 
 export interface VoyadoProviderSettings {
@@ -16,20 +14,20 @@ export interface VoyadoActivationContext {
 
 interface ActivationSchema {
   states: {
-    IDLE: {};
-    ACTIVATED: {};
-    CHECKING_ACTION_REQUIRED: {};
-    NO_ACTION_REQUIRED: {};
-    ACTION_REQUIRED: {
+    idle: {};
+    activated: {};
+    checking_action_required: {};
+    no_action_required: {};
+    action_required: {
       states: {
-        TRY_ACTIVATE: {};
-        ACTIVATION_FAILED: {
+        try_activate: {};
+        activation_failed: {
           states: {
-            STATUS_RESPONSE: {};
-            NON_EXISTING: {};
-            ALREADY_ACTIVATED: {};
-            ACTIVATION: {};
-            ADDITIONAL_DATA: {};
+            status_response: {};
+            non_existing: {};
+            already_activated: {};
+            activation: {};
+            additional_data: {};
           };
         };
       };
@@ -38,7 +36,7 @@ interface ActivationSchema {
 }
 
 type ActivationEvents =
-  | { type: 'CHECK_ACTION_REQUIRED'; data: any }
+  | { type: 'CHECKING_ACTION_REQUIRED'; data: any }
   | { type: 'NON_EXISTING_CUSTOMER'; data: any }
   | { type: 'ALREADY_ACTIVATED'; data: any }
   | { type: 'ACTIVATION_REQUIRED'; data: any }
@@ -56,20 +54,17 @@ type StateEventMapperIndex =
 
 const StateEventMapper: { [key in StateEventMapperIndex]: string } = {
   '': '',
-  CustomerNotFound: 'NON_EXISTING_CUSTOMER',
-  CustomerAlreadyActivated: '#ActivationMachine.ACTIVATED',
-  AdditionalUserDataRequired: 'ADDITIONAL_DATA_REQUIRED',
+  CustomerNotFound: 'non_existing_customer',
+  CustomerAlreadyActivated: '#ActivationMachine.activated',
+  AdditionalUserDataRequired: 'additional_data_required',
   UnableToActivateCustomer: '',
   UnableToLoginCustomer: '',
   InvalidCustomerActivateInput: '',
 };
 
-const sendActionEvent = send(
-  (context: VoyadoActivationContext) =>
-    console.log(StateEventMapper[context.status]) || {
-      type: StateEventMapper[context.status],
-    }
-);
+const sendActionEvent = send((context: VoyadoActivationContext) => ({
+  type: StateEventMapper[context.status],
+}));
 
 const setStatusReason = assign<VoyadoActivationContext, ActivationEvents>({
   status: (_, event: ActivationEvents) => {
@@ -82,7 +77,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
   Machine<VoyadoActivationContext, ActivationSchema, ActivationEvents>(
     {
       id: 'ActivationMachine',
-      initial: 'IDLE',
+      initial: 'idle',
       context: {
         externalCustomerToken: '',
         customer: undefined,
@@ -92,60 +87,60 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
         },
       },
       states: {
-        IDLE: {
+        idle: {
           always: [
             {
-              target: 'CHECKING_ACTION_REQUIRED',
+              target: 'checking_action_required',
               cond: 'shouldInitialize',
             },
             {
-              target: 'NO_ACTION_REQUIRED',
+              target: 'no_action_required',
             },
           ],
         },
-        ACTIVATED: {
+        activated: {
           type: 'final',
         },
-        CHECKING_ACTION_REQUIRED: {
+        checking_action_required: {
           invoke: {
             id: 'tryLogin',
             src: 'tryLogin',
-            onDone: 'NO_ACTION_REQUIRED',
-            onError: 'ACTION_REQUIRED',
+            onDone: 'no_action_required',
+            onError: 'action_required',
           },
         },
-        NO_ACTION_REQUIRED: {
+        no_action_required: {
           type: 'final',
         },
-        ACTION_REQUIRED: {
-          initial: 'TRY_ACTIVATE',
+        action_required: {
+          initial: 'try_activate',
           states: {
-            TRY_ACTIVATE: {
+            try_activate: {
               invoke: {
                 id: 'tryActivateByToken',
                 src: 'tryActivateByToken',
-                onDone: '#ActivationMachine.ACTIVATED',
+                onDone: '#ActivationMachine.activated',
                 onError: {
-                  target: 'ACTIVATION_FAILED',
+                  target: 'activation_failed',
                   actions: ['setStatusReason', 'sendActionEvent'],
                 },
               },
             },
-            ACTIVATION_FAILED: {
-              initial: 'STATUS_RESPONSE',
+            activation_failed: {
+              initial: 'status_response',
               states: {
-                STATUS_RESPONSE: {
+                status_response: {
                   on: {
-                    NON_EXISTING_CUSTOMER: 'NON_EXISTING',
-                    ALREADY_ACTIVATED: 'ALREADY_ACTIVATED',
-                    ACTIVATION_REQUIRED: 'ACTIVATION',
-                    ADDITIONAL_DATA_REQUIRED: 'ADDITIONAL_DATA',
+                    NON_EXISTING_CUSTOMER: 'non_existing',
+                    ALREADY_ACTIVATED: 'already_activated',
+                    ACTIVATION_REQUIRED: 'activation',
+                    ADDITIONAL_DATA_REQUIRED: 'additional_data',
                   },
                 },
-                NON_EXISTING: {},
-                ALREADY_ACTIVATED: {},
-                ACTIVATION: {},
-                ADDITIONAL_DATA: {},
+                non_existing: {},
+                already_activated: {},
+                activation: {},
+                additional_data: {},
               },
             },
           },

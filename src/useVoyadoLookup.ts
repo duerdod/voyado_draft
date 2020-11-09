@@ -79,19 +79,19 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
 
   // Surface API responses.
   const states = {
-    isActivationRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_REQUIRED'),
-    isActivationPending: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_LOADING'),
-    isActivationSuccess: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_SUCCESS'),
-    isPreExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.PREEXISTING'),
-    IsAdditionalDataRequired: state.matches('LOOKUP.LOOKUP_SUCCESS.ADDITIONAL_DATA'),
-    isNonExistingCustomer: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING'),
+    isActivationRequired: state.matches('lookup.lookup_success.activation.activation_required'),
+    isActivationPending: state.matches('lookup.lookup_success.activation.activation_loading'),
+    isActivationSuccess: state.matches('lookup.lookup_success.activation.activation_success'),
+    isPreExistingCustomer: state.matches('lookup.lookup_success.preexisting'),
+    IsAdditionalDataRequired: state.matches('lookup.lookup_success.additional_data'),
+    isNonExistingCustomer: state.matches('lookup.lookup_success.non_existing'),
     isPersonLookupPending: state.matches(
-      'LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_LOADING'
+      'lookup.lookup_success.non_existing.person_lookup_loading'
     ),
-    hasPersonLookupData: state.matches('LOOKUP.LOOKUP_SUCCESS.NON_EXISTING.PERSON_LOOKUP_SUCCESS'),
+    hasPersonLookupData: state.matches('lookup.lookup_success.non_existing.person_lookup_success'),
     error: {
-      lookupError: state.matches('LOOKUP.LOOKUP_FAILED'),
-      activationError: state.matches('LOOKUP.LOOKUP_SUCCESS.ACTIVATION.ACTIVATION_FAILED'),
+      lookupError: state.matches('lookup.lookup_failed'),
+      activationError: state.matches('lookup.lookup_success.activation.activation_failed'),
       errorMessage: state.context.activationError,
     },
   };

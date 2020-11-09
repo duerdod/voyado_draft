@@ -1,17 +1,10 @@
-import { Machine, assign, send } from 'xstate';
+import { Machine, assign, send, DoneEventObject } from 'xstate';
 
 const EVENTS = {
   ACTIVATION_REQUIRED: 'ACTIVATION_REQUIRED',
   PREEXISTING_CUSTOMER: 'PREEXISTING_CUSTOMER',
   ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
   NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
-};
-
-export const STATES = {
-  ACTIVATION_REQUIRED: '#ACTIVATION',
-  PREEXISTING_CUSTOMER: '#PREEXISTING',
-  ADDITIONAL_USER_DATA_REQUIRED: '#ADDITIONAL_DATA',
-  NON_EXISTING_CUSTOMER: '#NON_EXISTING',
 };
 
 export const defaultContext: Partial<LookupContext> = {
@@ -26,30 +19,30 @@ export interface LookupContext {
 
 export interface LookupSchema {
   states: {
-    IDLE: {};
-    LOOKUP: {
+    idle: {};
+    lookup: {
       states: {
-        LOOKUP_LOADING: {};
-        LOOKUP_FAILED: {};
-        LOOKUP_SUCCESS: {
+        lookup_loading: {};
+        lookup_failed: {};
+        lookup_success: {
           states: {
-            STATUS_RESPONSE: {};
-            ACTIVATION: {
+            status_response: {};
+            activation: {
               states: {
-                ACTIVATION_REQUIRED: {};
-                ACTIVATION_LOADING: {};
-                ACTIVATION_SUCCESS: {};
-                ACTIVATION_FAILED: {};
+                activation_required: {};
+                activation_loading: {};
+                activation_success: {};
+                activation_failed: {};
               };
             };
-            ADDITIONAL_DATA: {};
-            PREEXISTING: {};
-            NON_EXISTING: {
+            additional_data: {};
+            preexisting: {};
+            non_existing: {
               states: {
-                NON_EXISTING_CUSTOMER: {};
-                PERSON_LOOKUP_LOADING: {};
-                PERSON_LOOKUP_SUCCESS: {};
-                PERSON_LOOKUP_FAILED: {};
+                non_existing_customer: {};
+                person_lookup_loading: {};
+                person_lookup_success: {};
+                person_lookup_failed: {};
               };
             };
           };
@@ -66,7 +59,8 @@ export type LookupEvents =
   | { type: 'ADDITIONAL_USER_DATA_REQUIRED'; data: any }
   | { type: 'NON_EXISTING_CUSTOMER'; data: any }
   | { type: 'ACTIVATE_CUSTOMER'; data?: any }
-  | { type: 'RETRY'; data?: any };
+  | { type: 'RETRY'; data?: any }
+  | DoneEventObject;
 
 const sendLookupSuccessEvent = send((_: any, event: LookupEvents) => ({
   type: event.data.externalCustomerLookup.status,
@@ -120,122 +114,122 @@ const setActivationError = assign<LookupContext, LookupEvents>({
 export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
   {
     id: 'LookupMachine',
-    initial: 'IDLE',
+    initial: 'idle',
     context: {
       activationError: null,
       activateOnLookup: false,
       customer: undefined,
     },
     states: {
-      IDLE: {
-        id: 'IDLE',
+      idle: {
+        id: 'idle',
         on: {
-          DO_LOOKUP: 'LOOKUP',
+          DO_LOOKUP: 'lookup',
         },
       },
-      LOOKUP: {
+      lookup: {
         entry: 'storeEmail',
-        initial: 'LOOKUP_LOADING',
+        initial: 'lookup_loading',
         states: {
-          LOOKUP_LOADING: {
+          lookup_loading: {
             invoke: {
               id: 'fetchLookupStatus',
               src: 'externalLookup',
               onDone: {
-                target: 'LOOKUP_SUCCESS',
+                target: 'lookup_success',
                 actions: ['sendLookupSuccessEvent'],
               },
-              onError: 'LOOKUP_FAILED',
+              onError: 'lookup_failed',
             },
           },
-          LOOKUP_FAILED: {
+          lookup_failed: {
             on: {
-              RETRY: '#IDLE',
+              RETRY: '#idle',
             },
           },
-          LOOKUP_SUCCESS: {
-            initial: 'STATUS_RESPONSE',
+          lookup_success: {
+            initial: 'status_response',
             entry: 'storeCustomer',
             states: {
-              STATUS_RESPONSE: {
+              status_response: {
                 on: {
-                  [EVENTS.ACTIVATION_REQUIRED]: STATES.ACTIVATION_REQUIRED,
-                  [EVENTS.PREEXISTING_CUSTOMER]: STATES.PREEXISTING_CUSTOMER,
-                  [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: STATES.ADDITIONAL_USER_DATA_REQUIRED,
-                  [EVENTS.NON_EXISTING_CUSTOMER]: STATES.NON_EXISTING_CUSTOMER,
+                  [EVENTS.ACTIVATION_REQUIRED]: '#activation',
+                  [EVENTS.PREEXISTING_CUSTOMER]: '#preexisting',
+                  [EVENTS.ADDITIONAL_USER_DATA_REQUIRED]: '#additional_data',
+                  [EVENTS.NON_EXISTING_CUSTOMER]: '#non_existing',
                 },
               },
               // Account needs activation. Then can login.
-              ACTIVATION: {
-                id: 'ACTIVATION',
-                initial: 'ACTIVATION_REQUIRED',
+              activation: {
+                id: 'activation',
+                initial: 'activation_required',
                 states: {
-                  ACTIVATION_REQUIRED: {
+                  activation_required: {
                     always: {
-                      target: 'ACTIVATION_LOADING',
-                      cond: c => c.activateOnLookup,
+                      target: 'activation_loading',
+                      cond: context => context.activateOnLookup,
                     },
                     on: {
-                      ACTIVATE_CUSTOMER: 'ACTIVATION_LOADING',
+                      ACTIVATE_CUSTOMER: 'activation_loading',
                     },
                   },
-                  ACTIVATION_LOADING: {
+                  activation_loading: {
                     invoke: {
                       id: 'activate-customer-by-externalid',
                       src: 'activateExternalId',
                       onDone: {
                         actions: 'storeToken',
-                        target: 'ACTIVATION_SUCCESS',
+                        target: 'activation_success',
                       },
-                      onError: 'ACTIVATION_FAILED',
+                      onError: 'activation_failed',
                     },
                   },
-                  ACTIVATION_SUCCESS: {
+                  activation_success: {
                     type: 'final',
                   },
-                  ACTIVATION_FAILED: {
+                  activation_failed: {
                     entry: 'setActivationError',
                     on: {
-                      RETRY: '#IDLE',
+                      RETRY: '#idle',
                     },
                   },
                 },
               },
-              PREEXISTING: {
+              preexisting: {
                 // Can login.
-                id: 'PREEXISTING',
+                id: 'preexisting',
                 type: 'final',
               },
-              ADDITIONAL_DATA: {
+              additional_data: {
                 // Need more data to actually create a customer.
-                id: 'ADDITIONAL_DATA',
+                id: 'additional_data',
                 type: 'final',
               },
               // Customer does not exist. Try fetch required information.
-              NON_EXISTING: {
-                id: 'NON_EXISTING',
-                initial: 'NON_EXISTING_CUSTOMER',
+              non_existing: {
+                id: 'non_existing',
+                initial: 'non_existing_customer',
                 states: {
-                  NON_EXISTING_CUSTOMER: {
+                  non_existing_customer: {
                     always: {
-                      target: 'PERSON_LOOKUP_LOADING',
+                      target: 'person_lookup_loading',
                     },
                   },
-                  PERSON_LOOKUP_LOADING: {
+                  person_lookup_loading: {
                     invoke: {
                       id: 'fetch_person_lookupdata',
                       src: 'personLookup',
                       onDone: {
-                        target: 'PERSON_LOOKUP_SUCCESS',
+                        target: 'person_lookup_success',
                       },
-                      onError: 'PERSON_LOOKUP_FAILED',
+                      onError: 'person_lookup_failed',
                     },
                     exit: 'storeLookupData',
                   },
-                  PERSON_LOOKUP_SUCCESS: {
+                  person_lookup_success: {
                     type: 'final',
                   },
-                  PERSON_LOOKUP_FAILED: {
+                  person_lookup_failed: {
                     type: 'final',
                   },
                 },
