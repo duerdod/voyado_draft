@@ -1,5 +1,6 @@
+// @ts-nocheck
+
 import { assign, Machine, send, DoneEventObject } from 'xstate';
-import getErrorDetail from '@jetshop/core/helpers/getErrorDetail';
 
 export interface VoyadoProviderSettings {
   isCoolCustomer?: boolean;
@@ -50,26 +51,30 @@ type StateEventMapperIndex =
   | 'CustomerAlreadyActivated'
   | 'UnableToActivateCustomer'
   | 'UnableToLoginCustomer'
-  | 'InvalidCustomerActivateInput';
+  | 'InvalidCustomerActivateInput'
+  | 'AdditionalUserDataRequired';
 
 const StateEventMapper: { [key in StateEventMapperIndex]: string } = {
   '': '',
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
   CustomerAlreadyActivated: '#ActivationMachine.ACTIVATED',
+  AdditionalUserDataRequired: 'ADDITIONAL_DATA_REQUIRED',
   UnableToActivateCustomer: '',
   UnableToLoginCustomer: '',
   InvalidCustomerActivateInput: '',
 };
 
-const sendActionEvent = send((context: VoyadoActivationContext) => ({
-  type: StateEventMapper[context.status],
-}));
+const sendActionEvent = send(
+  (context: VoyadoActivationContext) =>
+    console.log(StateEventMapper[context.status]) || {
+      type: StateEventMapper[context.status],
+    }
+);
 
 const setStatusReason = assign<VoyadoActivationContext, ActivationEvents>({
   status: (_, event: ActivationEvents) => {
-    const [type] = getErrorDetail(event.data)?.codes;
-    console.log('errorType: ', type);
-    return type as StateEventMapperIndex;
+    const [errorType] = event.data.graphQLErrors;
+    return errorType.message as StateEventMapperIndex;
   },
 });
 
@@ -154,86 +159,3 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
       },
     }
   );
-
-/**
-
-interface ActivationSchema_ {
-  states: {
-    IDLE: {};
-    CHECKING_ACTION_REQUIRED: {}
-    ACTIVATED: {};
-    CHECK_POSSIBLE_CUSTOMER: {
-      states: {
-        CHECKING_POSSIBLE_CUSTOMER: {};
-      }
-    };
-    ACTION_REQUIRED: {
-      states: {
-        STATUS_RESPONSE: {};
-        NON_EXISTING: {};
-        ALREADY_ACTIVATED: {};
-        ACTIVATION: {};
-        ADDITIONAL_DATA: {};
-      };
-    };
-    ACTIVATING_FAILED: {};
-  };
-}
-
-       IDLE: {
-      always: {
-        target: 'ACTIVATED',
-        cond: 'shouldInitialize'
-      },
-      on: {
-        'CHECK_ACTION_REQUIRED': 'CHECKING_ACTION_REQUIRED'
-      }
-    },
-    CHECKING_ACTION_REQUIRED: {
-      invoke: {
-        id: 'tryLogin',
-        src: 'tryLogin',
-        onDone: 'NO_ACTION_REQUIRED',
-        onError: 'CHECK_POSSIBLE_CUSTOMER'
-      }
-    },
-    ACTIVATED: {
-      type: 'final',
-    },
-    CHECK_POSSIBLE_CUSTOMER: {
-      initial: 'CHECKING_POSSIBLE_CUSTOMER',
-      states: {
-        CHECKING_POSSIBLE_CUSTOMER: {
-          invoke: {
-            id: 'tryActivateByToken',
-            src: 'tryActivateByToken',
-            onDone: '#ActivationMachine.ACTIVATED',
-            onError: {
-              target: '#ActivationMachine.ACTION_REQUIRED',
-              actions: ['setStatusReason', 'sendActionEvent']
-            },
-          }
-        },
-      }
-    },
-    ACTION_REQUIRED: {
-      initial: 'STATUS_RESPONSE',
-      states: {
-        STATUS_RESPONSE: {
-          on: {
-            NON_EXISTING_CUSTOMER: 'NON_EXISTING',
-            ALREADY_ACTIVATED: 'ALREADY_ACTIVATED',
-            ACTIVATION_REQUIRED: 'ACTIVATION',
-            ADDITIONAL_DATA_REQUIRED: 'ADDITIONAL_DATA',
-          },
-        },
-        NON_EXISTING: {
-          type: 'final'
-        },
-        ALREADY_ACTIVATED: {},
-        ACTIVATION: {},
-        ADDITIONAL_DATA: {},
-      },
-    },
-    ACTIVATING_FAILED: {},
- */
