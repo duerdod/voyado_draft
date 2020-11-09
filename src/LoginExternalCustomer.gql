@@ -1,0 +1,7 @@
+mutation loginExternalCustomer($input: LoginExternalCustomerInput!) {
+  loginExternalCustomer(input: $input) {
+    token {
+      value
+    }
+  }
+}

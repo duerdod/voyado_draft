@@ -1,0 +1,40 @@
+mutation ActivateExternalToken($input: ActivateExternalCustomerByTokenInput!) {
+  activateExternalCustomerByToken(input: $input) {
+    success
+    customer {
+      externalId
+      firstName {
+        encrypted
+        masked
+      }
+      email {
+        encrypted
+        masked
+      }
+      lastName {
+        encrypted
+        masked
+      }
+      address {
+        encrypted
+        masked
+      }
+      postalCode {
+        encrypted
+        masked
+      }
+      mobilePhoneNumber {
+        encrypted
+        masked
+      }
+      city {
+        encrypted
+        masked
+      }
+      co {
+        encrypted
+        masked
+      }
+    }
+  }
+}

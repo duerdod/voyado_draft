@@ -96,7 +96,7 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
     },
   };
 
-  console.log(JSON.stringify(state.value));
+  // console.log(JSON.stringify(state.value));
 
   return {
     lookup,
