@@ -1,8 +1,9 @@
 import { assign, Machine, send, DoneEventObject } from 'xstate';
 
 export interface VoyadoProviderSettings {
-  isCoolCustomer?: boolean;
-  activated?: boolean;
+  loginPage?: string;
+  signupPage?: string;
+  loginOnActivation?: boolean;
 }
 
 export interface VoyadoActivationContext {
@@ -44,22 +45,20 @@ type ActivationEvents =
   | DoneEventObject;
 
 type StateEventMapperIndex =
-  | ''
+  | 'NoActionRequired' // Dummy
   | 'CustomerNotFound'
   | 'CustomerAlreadyActivated'
   | 'UnableToActivateCustomer'
   | 'UnableToLoginCustomer'
-  | 'InvalidCustomerActivateInput'
   | 'AdditionalUserDataRequired';
 
 const StateEventMapper: { [key in StateEventMapperIndex]: string } = {
-  '': '',
-  CustomerNotFound: 'non_existing_customer',
-  CustomerAlreadyActivated: '#ActivationMachine.activated',
-  AdditionalUserDataRequired: 'additional_data_required',
+  NoActionRequired: 'NO_ACTION_REQUIRED',
+  CustomerNotFound: 'NON_EXISTING_CUSTOMER',
+  CustomerAlreadyActivated: 'ALREADY_ACTIVATED',
+  AdditionalUserDataRequired: 'ADDITIONAL_DATA_REQUIRED',
   UnableToActivateCustomer: '',
   UnableToLoginCustomer: '',
-  InvalidCustomerActivateInput: '',
 };
 
 const sendActionEvent = send((context: VoyadoActivationContext) => ({
@@ -68,8 +67,33 @@ const sendActionEvent = send((context: VoyadoActivationContext) => ({
 
 const setStatusReason = assign<VoyadoActivationContext, ActivationEvents>({
   status: (_, event: ActivationEvents) => {
-    const [errorType] = event.data.graphQLErrors;
-    return errorType.message as StateEventMapperIndex;
+    const [errorType] = event.data.error;
+    return errorType.message || ('NoActionRequired' as StateEventMapperIndex);
+  },
+  customer: (_: any, event: ActivationEvents) => {
+    if (event.data.activateExternalCustomerByToken) {
+      return { ...event.data.activateExternalCustomerByToken.customer };
+    } else {
+      return undefined;
+    }
+  },
+});
+
+const storeCustomer = assign<VoyadoActivationContext, ActivationEvents>({
+  customer: (context: VoyadoActivationContext, event: ActivationEvents) => {
+    if (event.data?.externalCustomerLookup?.customer) {
+      return {
+        ...context.customer,
+        ...event.data.externalCustomerLookup.customer,
+        // Since there is a mismatch between SignupInput and ExternalLookup
+        streetName: event.data.externalCustomerLookup.customer.address,
+        mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
+      };
+    } else {
+      return {
+        ...context.customer,
+      };
+    }
   },
 });
 
@@ -81,7 +105,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
       context: {
         externalCustomerToken: '',
         customer: undefined,
-        status: '',
+        status: 'NoActionRequired',
         providerSettings: {
           ...providerSettings,
         },
@@ -113,6 +137,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
           type: 'final',
         },
         action_required: {
+          id: 'action_required',
           initial: 'try_activate',
           states: {
             try_activate: {
@@ -127,6 +152,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
               },
             },
             activation_failed: {
+              id: 'activation_failed',
               initial: 'status_response',
               states: {
                 status_response: {
@@ -135,12 +161,17 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
                     ALREADY_ACTIVATED: 'already_activated',
                     ACTIVATION_REQUIRED: 'activation',
                     ADDITIONAL_DATA_REQUIRED: 'additional_data',
+                    NO_ACTION_REQUIRED: 'non_existing',
                   },
                 },
-                non_existing: {},
+                non_existing: {
+                  type: 'final',
+                },
                 already_activated: {},
                 activation: {},
-                additional_data: {},
+                additional_data: {
+                  type: 'final',
+                },
               },
             },
           },
@@ -151,6 +182,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
       actions: {
         setStatusReason,
         sendActionEvent,
+        storeCustomer,
       },
     }
   );

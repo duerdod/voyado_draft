@@ -76,13 +76,14 @@ const storeEmail = assign<LookupContext, LookupEvents>({
 
 const storeCustomer = assign<LookupContext, LookupEvents>({
   customer: (context: LookupContext, event: LookupEvents) => {
-    if (event.data?.externalCustomerLookup?.customer) {
+    console.log(event.data);
+    if (event.data?.activateExternalCustomerByToken?.customer) {
       return {
         ...context.customer,
-        ...event.data.externalCustomerLookup.customer,
+        ...event.data.activateExternalCustomerByToken.customer,
         // Since there is a mismatch between SignupInput and ExternalLookup
-        streetName: event.data.externalCustomerLookup.customer.address,
-        mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
+        streetName: event.data.activateExternalCustomerByToken.customer.address,
+        mobilePhone: event.data.activateExternalCustomerByToken.customer.mobilePhoneNumber,
       };
     } else {
       return {

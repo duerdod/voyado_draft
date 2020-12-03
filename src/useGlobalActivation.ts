@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import {
   createActivationMachine,
   VoyadoProviderSettings,
@@ -12,15 +14,17 @@ import {
   LoginExternalCustomerResult,
   ActivateExternalCustomerByTokenResult,
 } from '@jetshop/core/types';
-import { useLocation } from 'react-router';
+import { useLocation, useHistory } from 'react-router';
 import qs from 'qs';
 
 import LoginExternalCustomer from './LoginExternalCustomer.gql';
 import ActivateExternalCustomerByToken from './ActivateExternalCustomerByToken.gql';
+import { useEffect } from 'react';
 
 export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   const client = useApolloClient();
   const { search } = useLocation();
+  const history = useHistory();
   const { loggedIn, logIn } = useAuth();
   const { eclub = '' } = qs.parse(search, { ignoreQueryPrefix: true });
 
@@ -52,7 +56,7 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
           if (data?.loginExternalCustomer.token?.value) {
             return Promise.resolve(logIn(data?.loginExternalCustomer?.token?.value));
           }
-          return;
+          return Promise.reject();
         },
         (error: any) => {
           return Promise.reject(error);
@@ -67,24 +71,26 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
         variables: {
           input: { externalCustomerToken: context.externalCustomerToken },
         },
+        errorPolicy: 'all',
       })
-      .then(
-        ({
-          data,
-        }: MutationResult<{
-          activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
-        }>) => {
-          return Promise.resolve(data);
-        },
-        (error: any) => {
-          return Promise.reject(error);
+      .then(({ data, errors }) => {
+        if (errors) {
+          // Change this when API is returning a status like we do on external lookup.
+          return Promise.reject({ error: { ...errors }, ...data });
         }
-      );
+        return Promise.resolve(data);
+      });
   }
 
   console.log(JSON.stringify(state.value));
+  // console.log(state.context)
+
+  const states = {
+    isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
+  };
 
   return {
     isCoolCustomer: state.context.providerSettings.isCoolCustomer,
+    ...states,
   };
 }
