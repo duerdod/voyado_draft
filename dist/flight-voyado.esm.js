@@ -66,7 +66,7 @@ var storeCustomer = /*#__PURE__*/ assign({
         : _event$data$externalC.customer
     ) {
       return _extends({}, context.customer, {}, event.data.externalCustomerLookup.customer, {
-        // Since there is a mismatch between SignupInput and ExternalLookup
+        // Since there is a mismatch between SignupInput type and ExternalLookup type
         streetName: event.data.externalCustomerLookup.customer.address,
         mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
       });
@@ -614,9 +614,8 @@ function useGlobalActivation(providerSettings) {
 
         return Promise.resolve(data);
       });
-  }
-
-  console.log(JSON.stringify(state.value)); // console.log(state.context)
+  } // console.log(JSON.stringify(state.value));
+  // console.log(state.context)
 
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
@@ -668,29 +667,23 @@ var storeEmail = /*#__PURE__*/ assign({
 });
 var storeCustomer$1 = /*#__PURE__*/ assign({
   customer: function customer(context, event) {
-    var _event$data, _event$data$activateE;
+    var _event$data, _event$data$externalC;
 
-    console.log(event.data);
+    console.log(event);
 
     if (
       (_event$data = event.data) === null || _event$data === void 0
         ? void 0
-        : (_event$data$activateE = _event$data.activateExternalCustomerByToken) === null ||
-          _event$data$activateE === void 0
+        : (_event$data$externalC = _event$data.externalCustomerLookup) === null ||
+          _event$data$externalC === void 0
         ? void 0
-        : _event$data$activateE.customer
+        : _event$data$externalC.customer
     ) {
-      return _extends(
-        {},
-        context.customer,
-        {},
-        event.data.activateExternalCustomerByToken.customer,
-        {
-          // Since there is a mismatch between SignupInput and ExternalLookup
-          streetName: event.data.activateExternalCustomerByToken.customer.address,
-          mobilePhone: event.data.activateExternalCustomerByToken.customer.mobilePhoneNumber,
-        }
-      );
+      return _extends({}, context.customer, {}, event.data.externalCustomerLookup.customer, {
+        // Since there is a mismatch between SignupInput and ExternalLookup
+        streetName: event.data.externalCustomerLookup.customer.address,
+        mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
+      });
     } else {
       return _extends({}, context.customer);
     }
@@ -1520,8 +1513,8 @@ function useVoyadoLookup(settings) {
       activationError: state.matches('lookup.lookup_success.activation.activation_failed'),
       errorMessage: state.context.activationError,
     },
-  }; // console.log(JSON.stringify(state.value));
-
+  };
+  console.log(JSON.stringify(state.value));
   return _extends(
     {
       lookup: lookup,

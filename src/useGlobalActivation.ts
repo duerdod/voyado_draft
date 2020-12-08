@@ -82,7 +82,7 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
       });
   }
 
-  console.log(JSON.stringify(state.value));
+  // console.log(JSON.stringify(state.value));
   // console.log(state.context)
 
   const states = {

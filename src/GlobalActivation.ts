@@ -85,7 +85,7 @@ const storeCustomer = assign<VoyadoActivationContext, ActivationEvents>({
       return {
         ...context.customer,
         ...event.data.externalCustomerLookup.customer,
-        // Since there is a mismatch between SignupInput and ExternalLookup
+        // Since there is a mismatch between SignupInput type and ExternalLookup type
         streetName: event.data.externalCustomerLookup.customer.address,
         mobilePhone: event.data.externalCustomerLookup.customer.mobilePhoneNumber,
       };
