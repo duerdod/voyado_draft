@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import {
   createActivationMachine,
   VoyadoProviderSettings,
@@ -14,17 +12,15 @@ import {
   LoginExternalCustomerResult,
   ActivateExternalCustomerByTokenResult,
 } from '@jetshop/core/types';
-import { useLocation, useHistory } from 'react-router';
+import { useLocation } from 'react-router';
 import qs from 'qs';
 
 import LoginExternalCustomer from './LoginExternalCustomer.gql';
 import ActivateExternalCustomerByToken from './ActivateExternalCustomerByToken.gql';
-import { useEffect } from 'react';
 
 export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   const client = useApolloClient();
   const { search } = useLocation();
-  const history = useHistory();
   const { loggedIn, logIn } = useAuth();
   const { eclub = '' } = qs.parse(search, { ignoreQueryPrefix: true });
 
@@ -73,16 +69,21 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
         },
         errorPolicy: 'all',
       })
-      .then(({ data, errors }) => {
-        if (errors) {
+      .then((response: MutationResult) => {
+        const data: MutationResult<{
+          activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
+        }> = response.data;
+        const error: any = response.error;
+
+        if (error) {
           // Change this when API is returning a status like we do on external lookup.
-          return Promise.reject({ error: { ...errors }, ...data });
+          return Promise.reject({ error: { ...error }, ...data });
         }
         return Promise.resolve(data);
       });
   }
 
-  // console.log(JSON.stringify(state.value));
+  console.log('GlobalActivationState: ', JSON.stringify(state.value));
   // console.log(state.context)
 
   const states = {
@@ -90,7 +91,6 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   };
 
   return {
-    isCoolCustomer: state.context.providerSettings.isCoolCustomer,
     ...states,
   };
 }

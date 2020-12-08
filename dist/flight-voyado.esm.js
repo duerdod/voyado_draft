@@ -3,7 +3,7 @@ import { Machine, send, assign } from 'xstate';
 import { useMachine } from '@xstate/react';
 import { useApolloClient } from '@apollo/react-hooks';
 import useAuth from '@jetshop/core/components/AuthContext/useAuth';
-import { useLocation, useHistory } from 'react-router';
+import { useLocation } from 'react-router';
 import qs from 'qs';
 
 function _extends() {
@@ -508,8 +508,6 @@ function useGlobalActivation(providerSettings) {
   var _useLocation = useLocation(),
     search = _useLocation.search;
 
-  var history = useHistory();
-
   var _useAuth = useAuth(),
     loggedIn = _useAuth.loggedIn,
     logIn = _useAuth.logIn;
@@ -596,16 +594,16 @@ function useGlobalActivation(providerSettings) {
         },
         errorPolicy: 'all',
       })
-      .then(function(_ref2) {
-        var data = _ref2.data,
-          errors = _ref2.errors;
+      .then(function(response) {
+        var data = response.data;
+        var error = response.error;
 
-        if (errors) {
+        if (error) {
           // Change this when API is returning a status like we do on external lookup.
           return Promise.reject(
             _extends(
               {
-                error: _extends({}, errors),
+                error: _extends({}, error),
               },
               data
             )
@@ -614,18 +612,14 @@ function useGlobalActivation(providerSettings) {
 
         return Promise.resolve(data);
       });
-  } // console.log(JSON.stringify(state.value));
-  // console.log(state.context)
+  }
+
+  console.log('GlobalActivationState: ', JSON.stringify(state.value)); // console.log(state.context)
 
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
   };
-  return _extends(
-    {
-      isCoolCustomer: state.context.providerSettings.isCoolCustomer,
-    },
-    states
-  );
+  return _extends({}, states);
 }
 
 var VoyadoContext = /*#__PURE__*/ createContext({});
@@ -1514,7 +1508,7 @@ function useVoyadoLookup(settings) {
       errorMessage: state.context.activationError,
     },
   };
-  console.log(JSON.stringify(state.value));
+  console.log('VoyadoLookupState: ', JSON.stringify(state.value));
   return _extends(
     {
       lookup: lookup,
