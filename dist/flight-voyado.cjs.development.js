@@ -591,34 +591,36 @@ function useGlobalActivation(providerSettings) {
   }
 
   function tryActivateByToken(context) {
-    return client
-      .mutate({
-        mutation: ActivateExternalCustomerByToken,
-        variables: {
-          input: {
-            externalCustomerToken: context.externalCustomerToken,
+    return (
+      client
+        .mutate({
+          mutation: ActivateExternalCustomerByToken,
+          variables: {
+            input: {
+              externalCustomerToken: context.externalCustomerToken,
+            },
           },
-        },
-        errorPolicy: 'all',
-      })
-      .then(function(response) {
-        var data = response.data;
-        var error = response.error;
+          errorPolicy: 'all',
+        }) // Change this when API is returning a status like we do on external lookup.
+        // If we got a status, we could just forward them as event.type.
+        .then(function(response) {
+          var data = response.data;
+          var error = response.error;
 
-        if (error) {
-          // Change this when API is returning a status like we do on external lookup.
-          return Promise.reject(
-            _extends(
-              {
-                error: _extends({}, error),
-              },
-              data
-            )
-          );
-        }
+          if (error) {
+            return Promise.reject(
+              _extends(
+                {
+                  error: _extends({}, error),
+                },
+                data
+              )
+            );
+          }
 
-        return Promise.resolve(data);
-      });
+          return Promise.resolve(data);
+        })
+    );
   }
 
   console.log('GlobalActivationState: ', JSON.stringify(state.value)); // console.log(state.context)

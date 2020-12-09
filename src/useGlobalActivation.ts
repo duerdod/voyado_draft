@@ -61,26 +61,29 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   }
 
   function tryActivateByToken(context: VoyadoActivationContext) {
-    return client
-      .mutate({
-        mutation: ActivateExternalCustomerByToken,
-        variables: {
-          input: { externalCustomerToken: context.externalCustomerToken },
-        },
-        errorPolicy: 'all',
-      })
-      .then((response: MutationResult) => {
-        const data: MutationResult<{
-          activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
-        }> = response.data;
-        const error: any = response.error;
+    return (
+      client
+        .mutate({
+          mutation: ActivateExternalCustomerByToken,
+          variables: {
+            input: { externalCustomerToken: context.externalCustomerToken },
+          },
+          errorPolicy: 'all',
+        })
+        // Change this when API is returning a status like we do on external lookup.
+        // If we got a status, we could just forward them as event.type.
+        .then((response: MutationResult) => {
+          const data: MutationResult<{
+            activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
+          }> = response.data;
+          const error: any = response.error;
 
-        if (error) {
-          // Change this when API is returning a status like we do on external lookup.
-          return Promise.reject({ error: { ...error }, ...data });
-        }
-        return Promise.resolve(data);
-      });
+          if (error) {
+            return Promise.reject({ error: { ...error }, ...data });
+          }
+          return Promise.resolve(data);
+        })
+    );
   }
 
   console.log('GlobalActivationState: ', JSON.stringify(state.value));
