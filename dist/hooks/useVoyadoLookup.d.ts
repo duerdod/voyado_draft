@@ -1,4 +1,4 @@
-import { LookupContext } from './states/ExternalLookup';
+import { LookupContext } from '../states/ExternalLookup';
 export declare function useVoyadoLookup(
   settings: Partial<LookupContext>
 ): {

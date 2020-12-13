@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import { LookupMachine, LookupContext, LookupEvents } from './ExternalLookup';
+import { LookupMachine, LookupContext, LookupEvents } from '../states/ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
 import { QueryResult, MutationResult } from '@apollo/react-common';
 import {
@@ -8,9 +8,9 @@ import {
   ActivateExternalCustomerByIdResult,
 } from '@jetshop/core/types';
 
-import ExternalLookupQuery from './ExternalLookupQuery.gql';
-import ActivateExternalId from './ActivateExternalId.gql';
-import LookupQuery from './LookupQuery.gql';
+import ExternalLookupQuery from '../queries/ExternalLookupQuery.gql';
+import ActivateExternalId from '../queries/ActivateExternalId.gql';
+import LookupQuery from '../queries/LookupQuery.gql';
 
 export function useVoyadoLookup(settings: Partial<LookupContext>) {
   const client = useApolloClient();

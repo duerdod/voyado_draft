@@ -1,14 +1,7 @@
-// @ts-nocheck
+import React, { createContext } from 'react';
 
-import React, { createContext, useEffect } from 'react';
-import { useLocation } from 'react-router';
-import qs from 'qs';
-import { useApolloClient } from '@apollo/react-hooks';
-import useAuth from '@jetshop/core/components/AuthContext/useAuth';
-
-import { useGlobalActivation } from './useGlobalActivation';
-import { VoyadoProviderSettings } from './GlobalActivation';
-import LoginExternalCustomer from './LoginExternalCustomer.gql';
+import { useGlobalActivation } from './hooks/useGlobalActivation';
+import { VoyadoProviderSettings } from './states/GlobalActivation';
 
 export const VoyadoContext = createContext({});
 

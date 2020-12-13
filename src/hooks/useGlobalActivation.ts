@@ -2,7 +2,7 @@ import {
   createActivationMachine,
   VoyadoProviderSettings,
   VoyadoActivationContext,
-} from './GlobalActivation';
+} from '../states/GlobalActivation';
 import { useMachine } from '@xstate/react';
 
 import { useApolloClient } from '@apollo/react-hooks';
@@ -15,8 +15,8 @@ import {
 import { useLocation } from 'react-router';
 import qs from 'qs';
 
-import LoginExternalCustomer from './LoginExternalCustomer.gql';
-import ActivateExternalCustomerByToken from './ActivateExternalCustomerByToken.gql';
+import LoginExternalCustomer from '../queries/LoginExternalCustomer.gql';
+import ActivateExternalCustomerByToken from '../queries/ActivateExternalCustomerByToken.gql';
 
 export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   const client = useApolloClient();

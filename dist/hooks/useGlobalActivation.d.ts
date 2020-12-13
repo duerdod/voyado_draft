@@ -1,4 +1,4 @@
-import { VoyadoProviderSettings } from './states/GlobalActivation';
+import { VoyadoProviderSettings } from '../states/GlobalActivation';
 export declare function useGlobalActivation(
   providerSettings: VoyadoProviderSettings
 ): {
