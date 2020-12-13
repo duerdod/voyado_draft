@@ -25,7 +25,6 @@ interface ActivationSchema {
             status_response: {};
             non_existing: {};
             already_activated: {};
-            activation: {};
             additional_data: {};
           };
         };
@@ -59,8 +58,6 @@ declare type StateEventMapperIndex =
   | 'NoActionRequired'
   | 'CustomerNotFound'
   | 'CustomerAlreadyActivated'
-  | 'UnableToActivateCustomer'
-  | 'UnableToLoginCustomer'
   | 'AdditionalUserDataRequired';
 export declare const createActivationMachine: (
   providerSettings: VoyadoProviderSettings

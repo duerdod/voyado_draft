@@ -70,13 +70,14 @@ const sendLookupSuccessEvent = send((_: any, event: LookupEvents) => ({
 const storeEmail = assign<LookupContext, LookupEvents>({
   customer: (context: LookupContext, event: LookupEvents) => ({
     ...context.customer,
-    email: event.data.key,
+    emailAddress: {
+      masked: event.data.key,
+    },
   }),
 });
 
 const storeCustomer = assign<LookupContext, LookupEvents>({
   customer: (context: LookupContext, event: LookupEvents) => {
-    console.log(event);
     if (event.data?.externalCustomerLookup?.customer) {
       return {
         ...context.customer,
@@ -94,9 +95,11 @@ const storeCustomer = assign<LookupContext, LookupEvents>({
 });
 
 const storeLookupData = assign<LookupContext, LookupEvents>({
-  customer: (_: LookupContext, event: LookupEvents) => {
+  customer: (context: LookupContext, event: LookupEvents) => {
     if (event?.data?.personLookup) {
       return { ...event.data.personLookup };
+    } else {
+      return { ...context.customer };
     }
   },
 });

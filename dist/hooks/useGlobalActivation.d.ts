@@ -3,4 +3,6 @@ export declare function useGlobalActivation(
   providerSettings: VoyadoProviderSettings
 ): {
   isAdditionalDataRequired: boolean;
+  isNonExistingCustomer: boolean;
+  isActivationRequired: boolean;
 };

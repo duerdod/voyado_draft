@@ -31,8 +31,6 @@ var StateEventMapper = {
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
   CustomerAlreadyActivated: 'ALREADY_ACTIVATED',
   AdditionalUserDataRequired: 'ADDITIONAL_DATA_REQUIRED',
-  UnableToActivateCustomer: '',
-  UnableToLoginCustomer: '',
 };
 var sendActionEvent = /*#__PURE__*/ send(function(context) {
   return {
@@ -99,7 +97,15 @@ var createActivationMachine = function createActivationMachine(providerSettings)
           ],
         },
         activated: {
-          type: 'final',
+          always: [
+            {
+              target: 'checking_action_required',
+              cond: 'shouldInitialize',
+            },
+            {
+              target: 'no_action_required',
+            },
+          ],
         },
         checking_action_required: {
           invoke: {
@@ -122,7 +128,6 @@ var createActivationMachine = function createActivationMachine(providerSettings)
                 src: 'tryActivateByToken',
                 onDone: {
                   target: '#ActivationMachine.activated',
-                  cond: '',
                 },
                 onError: {
                   target: 'activation_failed',
@@ -138,7 +143,6 @@ var createActivationMachine = function createActivationMachine(providerSettings)
                   on: {
                     NON_EXISTING_CUSTOMER: 'non_existing',
                     ALREADY_ACTIVATED: 'already_activated',
-                    ACTIVATION_REQUIRED: 'activation',
                     ADDITIONAL_DATA_REQUIRED: 'additional_data',
                     NO_ACTION_REQUIRED: 'non_existing',
                   },
@@ -146,8 +150,9 @@ var createActivationMachine = function createActivationMachine(providerSettings)
                 non_existing: {
                   type: 'final',
                 },
-                already_activated: {},
-                activation: {},
+                already_activated: {
+                  type: 'final',
+                },
                 additional_data: {
                   type: 'final',
                 },
@@ -623,6 +628,8 @@ function useGlobalActivation(providerSettings) {
 
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
+    isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
+    isActivationRequired: state.matches('action_required.activation_failed.already_activated'),
   };
   return _extends({}, states);
 }
@@ -660,15 +667,15 @@ var sendLookupSuccessEvent = /*#__PURE__*/ send(function(_, event) {
 var storeEmail = /*#__PURE__*/ assign({
   customer: function customer(context, event) {
     return _extends({}, context.customer, {
-      email: event.data.key,
+      emailAddress: {
+        masked: event.data.key,
+      },
     });
   },
 });
 var storeCustomer$1 = /*#__PURE__*/ assign({
   customer: function customer(context, event) {
     var _event$data, _event$data$externalC;
-
-    console.log(event);
 
     if (
       (_event$data = event.data) === null || _event$data === void 0
@@ -689,7 +696,7 @@ var storeCustomer$1 = /*#__PURE__*/ assign({
   },
 });
 var storeLookupData = /*#__PURE__*/ assign({
-  customer: function customer(_, event) {
+  customer: function customer(context, event) {
     var _event$data2;
 
     if (
@@ -700,6 +707,8 @@ var storeLookupData = /*#__PURE__*/ assign({
         : _event$data2.personLookup
     ) {
       return _extends({}, event.data.personLookup);
+    } else {
+      return _extends({}, context.customer);
     }
   },
 });
@@ -1450,7 +1459,7 @@ function useVoyadoLookup(settings) {
       .query({
         query: LookupQuery,
         variables: {
-          key: context.customer.email,
+          key: context.customer.emailAddress,
         },
       })
       .then(function(_ref2) {

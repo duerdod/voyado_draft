@@ -28,7 +28,6 @@ interface ActivationSchema {
             status_response: {};
             non_existing: {};
             already_activated: {};
-            activation: {};
             additional_data: {};
           };
         };
@@ -49,8 +48,6 @@ type StateEventMapperIndex =
   | 'NoActionRequired' // Dummy
   | 'CustomerNotFound'
   | 'CustomerAlreadyActivated'
-  | 'UnableToActivateCustomer'
-  | 'UnableToLoginCustomer'
   | 'AdditionalUserDataRequired';
 
 const StateEventMapper: { [key in StateEventMapperIndex]: string } = {
@@ -58,8 +55,6 @@ const StateEventMapper: { [key in StateEventMapperIndex]: string } = {
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
   CustomerAlreadyActivated: 'ALREADY_ACTIVATED',
   AdditionalUserDataRequired: 'ADDITIONAL_DATA_REQUIRED',
-  UnableToActivateCustomer: '',
-  UnableToLoginCustomer: '',
 };
 
 const sendActionEvent = send((context: VoyadoActivationContext) => ({
@@ -124,7 +119,15 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
           ],
         },
         activated: {
-          type: 'final',
+          always: [
+            {
+              target: 'checking_action_required',
+              cond: 'shouldInitialize',
+            },
+            {
+              target: 'no_action_required',
+            },
+          ],
         },
         checking_action_required: {
           invoke: {
@@ -147,7 +150,6 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
                 src: 'tryActivateByToken',
                 onDone: {
                   target: '#ActivationMachine.activated',
-                  cond: '',
                 },
                 onError: {
                   target: 'activation_failed',
@@ -163,7 +165,6 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
                   on: {
                     NON_EXISTING_CUSTOMER: 'non_existing',
                     ALREADY_ACTIVATED: 'already_activated',
-                    ACTIVATION_REQUIRED: 'activation',
                     ADDITIONAL_DATA_REQUIRED: 'additional_data',
                     NO_ACTION_REQUIRED: 'non_existing',
                   },
@@ -171,8 +172,9 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
                 non_existing: {
                   type: 'final',
                 },
-                already_activated: {},
-                activation: {},
+                already_activated: {
+                  type: 'final',
+                },
                 additional_data: {
                   type: 'final',
                 },

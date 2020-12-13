@@ -41,7 +41,7 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
     return client
       .query({
         query: LookupQuery,
-        variables: { key: context.customer.email },
+        variables: { key: context.customer.emailAddress },
       })
       .then(({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data);
   }

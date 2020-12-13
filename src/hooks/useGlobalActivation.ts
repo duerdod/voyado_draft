@@ -92,6 +92,8 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
 
   const states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
+    isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
+    isActivationRequired: state.matches('action_required.activation_failed.already_activated'),
   };
 
   return {
