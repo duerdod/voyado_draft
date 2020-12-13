@@ -1,3 +1,6 @@
 # @jetshop/flight-voyado
 
-In dev, create symlinks for React, React-DOM, @jetshop/core from shop dependencies.
+##### In dev,
+
+1.  create symlinks for react, react-dom, react-router, react-router-dom, @apollo/react-hooks, @jetshop/core from shop dependencies.
+2.  create symlink for package.
