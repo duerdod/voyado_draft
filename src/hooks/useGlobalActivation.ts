@@ -72,11 +72,12 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
         })
         // Change this when API is returning a status like we do on external lookup.
         // If we got a status, we could just forward them as event.type.
-        .then((response: MutationResult) => {
+        .then((response: any) => {
           const data: MutationResult<{
             activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
           }> = response.data;
-          const error: any = response.error;
+
+          const error: any = response.errors;
 
           if (error) {
             return Promise.reject({ error: { ...error }, ...data });

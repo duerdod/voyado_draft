@@ -598,7 +598,7 @@ function useGlobalActivation(providerSettings) {
         // If we got a status, we could just forward them as event.type.
         .then(function(response) {
           var data = response.data;
-          var error = response.error;
+          var error = response.errors;
 
           if (error) {
             return Promise.reject(
