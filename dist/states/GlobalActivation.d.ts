@@ -3,6 +3,7 @@ export interface VoyadoProviderSettings {
   loginPage?: string;
   signupPage?: string;
   loginOnActivation?: boolean;
+  manualActivation: boolean;
 }
 export interface VoyadoActivationContext {
   externalCustomerToken: string;

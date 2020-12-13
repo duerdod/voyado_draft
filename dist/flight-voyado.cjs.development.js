@@ -127,7 +127,10 @@ var createActivationMachine = function createActivationMachine(providerSettings)
               invoke: {
                 id: 'tryActivateByToken',
                 src: 'tryActivateByToken',
-                onDone: '#ActivationMachine.activated',
+                onDone: {
+                  target: '#ActivationMachine.activated',
+                  cond: '',
+                },
                 onError: {
                   target: 'activation_failed',
                   actions: ['setStatusReason', 'sendActionEvent'],

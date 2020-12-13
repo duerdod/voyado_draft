@@ -4,6 +4,7 @@ export interface VoyadoProviderSettings {
   loginPage?: string;
   signupPage?: string;
   loginOnActivation?: boolean;
+  manualActivation: boolean;
 }
 
 export interface VoyadoActivationContext {
@@ -144,7 +145,10 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
               invoke: {
                 id: 'tryActivateByToken',
                 src: 'tryActivateByToken',
-                onDone: '#ActivationMachine.activated',
+                onDone: {
+                  target: '#ActivationMachine.activated',
+                  cond: '',
+                },
                 onError: {
                   target: 'activation_failed',
                   actions: ['setStatusReason', 'sendActionEvent'],
