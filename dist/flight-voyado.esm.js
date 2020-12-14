@@ -1,9 +1,9 @@
-import React, { createContext } from 'react';
+import React, { useEffect, createContext, useContext } from 'react';
 import { Machine, send, assign } from 'xstate';
 import { useMachine } from '@xstate/react';
 import { useApolloClient } from '@apollo/react-hooks';
 import useAuth from '@jetshop/core/components/AuthContext/useAuth';
-import { useLocation } from 'react-router';
+import { useHistory, useLocation } from 'react-router';
 import qs from 'qs';
 
 function _extends() {
@@ -1197,6 +1197,7 @@ function personLookup(context, options) {
 }
 
 function useGlobalActivation(providerSettings) {
+  var history = useHistory();
   var client = useApolloClient();
 
   var _useLocation = useLocation(),
@@ -1243,7 +1244,22 @@ function useGlobalActivation(providerSettings) {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
     isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
     isActivationRequired: state.matches('action_required.activation_failed.already_activated'),
+    // The following might cause impossible states...
+    isActionPending:
+      state.matches('checking_action_required') ||
+      state.matches('action_required.try_activate') ||
+      state.matches('action_required.activation_failed.status_response'),
   };
+  useEffect(
+    function() {
+      if (states.isAdditionalDataRequired) {
+        history.push(providerSettings.signupPage || '/signup', {
+          customer: _extends({}, state.context.customer),
+        });
+      }
+    },
+    [states.isAdditionalDataRequired]
+  );
   return _extends({}, states);
 }
 
@@ -1260,6 +1276,15 @@ var VoyadoProvider = function VoyadoProvider(props) {
     )
   );
 };
+function useGlobalActivationValues() {
+  var context = useContext(VoyadoContext);
+
+  if (!context) {
+    return Error('useGlobalActivationValues cannot be used outside VoyadoProvider');
+  }
+
+  return context;
+}
 
 var _on;
 var EVENTS = {
@@ -1568,6 +1593,7 @@ export {
   createActivationMachine,
   defaultContext,
   useGlobalActivation,
+  useGlobalActivationValues,
   useVoyadoLookup,
 };
 //# sourceMappingURL=flight-voyado.esm.js.map

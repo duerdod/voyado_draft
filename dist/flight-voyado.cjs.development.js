@@ -1204,6 +1204,7 @@ function personLookup(context, options) {
 }
 
 function useGlobalActivation(providerSettings) {
+  var history = reactRouter.useHistory();
   var client = reactHooks.useApolloClient();
 
   var _useLocation = reactRouter.useLocation(),
@@ -1250,7 +1251,22 @@ function useGlobalActivation(providerSettings) {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
     isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
     isActivationRequired: state.matches('action_required.activation_failed.already_activated'),
+    // The following might cause impossible states...
+    isActionPending:
+      state.matches('checking_action_required') ||
+      state.matches('action_required.try_activate') ||
+      state.matches('action_required.activation_failed.status_response'),
   };
+  React.useEffect(
+    function() {
+      if (states.isAdditionalDataRequired) {
+        history.push(providerSettings.signupPage || '/signup', {
+          customer: _extends({}, state.context.customer),
+        });
+      }
+    },
+    [states.isAdditionalDataRequired]
+  );
   return _extends({}, states);
 }
 
@@ -1267,6 +1283,15 @@ var VoyadoProvider = function VoyadoProvider(props) {
     )
   );
 };
+function useGlobalActivationValues() {
+  var context = React.useContext(VoyadoContext);
+
+  if (!context) {
+    return Error('useGlobalActivationValues cannot be used outside VoyadoProvider');
+  }
+
+  return context;
+}
 
 var _on;
 var EVENTS = {
@@ -1574,5 +1599,6 @@ exports.VoyadoProvider = VoyadoProvider;
 exports.createActivationMachine = createActivationMachine;
 exports.defaultContext = defaultContext;
 exports.useGlobalActivation = useGlobalActivation;
+exports.useGlobalActivationValues = useGlobalActivationValues;
 exports.useVoyadoLookup = useVoyadoLookup;
 //# sourceMappingURL=flight-voyado.cjs.development.js.map

@@ -6,4 +6,5 @@ interface VoyadoProviderProps {
   settings: VoyadoProviderSettings;
 }
 export declare const VoyadoProvider: (props: VoyadoProviderProps) => JSX.Element;
+export declare function useGlobalActivationValues(): {};
 export {};

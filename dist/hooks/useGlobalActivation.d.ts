@@ -5,4 +5,5 @@ export declare function useGlobalActivation(
   isAdditionalDataRequired: boolean;
   isNonExistingCustomer: boolean;
   isActivationRequired: boolean;
+  isActionPending: boolean;
 };
