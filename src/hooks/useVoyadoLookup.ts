@@ -1,69 +1,34 @@
 import { useMachine } from '@xstate/react';
 import { LookupMachine, LookupContext, LookupEvents } from '../states/ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
-import { QueryResult, MutationResult } from '@apollo/react-common';
-import {
-  PersonLookup,
-  ExternalCustomerResult,
-  ActivateExternalCustomerByIdResult,
-} from '@jetshop/core/types';
 
-import ExternalLookupQuery from '../queries/ExternalLookupQuery.gql';
-import ActivateExternalId from '../queries/ActivateExternalId.gql';
-import LookupQuery from '../queries/LookupQuery.gql';
+import * as resolver from '../resolver';
 
 export function useVoyadoLookup(settings: Partial<LookupContext>) {
   const client = useApolloClient();
   const [state, send] = useMachine(LookupMachine, {
     services: {
-      externalLookup,
-      activateExternalId,
-      personLookup,
+      externalLookup: (_, event: LookupEvents) => {
+        return resolver.externalLookup(event, {
+          client,
+        });
+      },
+      activateExternalId: (context: LookupContext) => {
+        return resolver.activateExternalId(context, {
+          client,
+        });
+      },
+      personLookup: (context: LookupContext) => {
+        return resolver.personLookup(context, {
+          client,
+        });
+      },
     },
     context: {
       ...settings,
       customer: null,
     },
   });
-
-  function externalLookup(_: any, event: LookupEvents) {
-    return client
-      .query({
-        query: ExternalLookupQuery,
-        variables: { key: event.data.key },
-      })
-      .then(({ data }: { data: QueryResult<{ ExternalLookupQuery: ExternalCustomerResult }> }) => {
-        return data;
-      });
-  }
-
-  function personLookup(context: LookupContext) {
-    return client
-      .query({
-        query: LookupQuery,
-        variables: { key: context.customer.emailAddress },
-      })
-      .then(({ data }: { data: QueryResult<{ LookupQuery: PersonLookup }> }) => data);
-  }
-
-  function activateExternalId(context: LookupContext) {
-    return client
-      .mutate({
-        mutation: ActivateExternalId,
-        variables: {
-          input: { externalCustomerId: context.customer.externalId },
-        },
-      })
-      .then(
-        ({
-          data,
-        }: {
-          data: MutationResult<{
-            ActivateExternalId: ActivateExternalCustomerByIdResult;
-          }>;
-        }) => data
-      );
-  }
 
   const lookup = (key: string) => {
     send({ type: 'DO_LOOKUP', data: { key } });

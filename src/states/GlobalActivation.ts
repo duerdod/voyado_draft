@@ -119,6 +119,7 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
           ],
         },
         activated: {
+          // Log in.
           always: [
             {
               target: 'checking_action_required',
