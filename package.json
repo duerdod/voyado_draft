@@ -20,7 +20,8 @@
     "@jetshop/core": ">=5",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "react-router": ">=5"
+    "react-router": ">=5",
+    "apollo-client": ">=2.5.0"
   },
   "husky": {
     "hooks": {
@@ -44,6 +45,7 @@
     "@types/react-dom": "^16.9.8",
     "@types/react-router-dom": "^5.1.6",
     "@xstate/react": "^1.0.1",
+    "apollo-client": "^2.6.10",
     "babel-plugin-graphql-tag": "^3.1.0",
     "babel-plugin-import-graphql": "^2.7.0",
     "graphql": "^15.4.0",
@@ -60,7 +62,5 @@
     "typescript": "^3.8.3",
     "xstate": "^4.13.0"
   },
-  "dependencies": {
-    "apollo-client": "^2.6.10"
-  }
+  "dependencies": {}
 }
