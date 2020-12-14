@@ -180,80 +180,6 @@ var createActivationMachine = function createActivationMachine(providerSettings)
   );
 };
 
-var LoginExternalCustomer = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'loginExternalCustomer' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'NamedType',
-              name: { kind: 'Name', value: 'LoginExternalCustomerInput' },
-            },
-          },
-          directives: [],
-        },
-      ],
-      directives: [],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'loginExternalCustomer' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'input' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
-              },
-            ],
-            directives: [],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'token' },
-                  arguments: [],
-                  directives: [],
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'value' },
-                        arguments: [],
-                        directives: [],
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-  loc: {
-    start: 0,
-    end: 147,
-    source: {
-      body:
-        'mutation loginExternalCustomer($input: LoginExternalCustomerInput!) {\n  loginExternalCustomer(input: $input) {\n    token {\n      value\n    }\n  }\n}\n',
-      name: 'GraphQL request',
-      locationOffset: { line: 1, column: 1 },
-    },
-  },
-};
 var ActivateExternalCustomerByToken = {
   kind: 'Document',
   definitions: [
@@ -513,6 +439,86 @@ var ActivateExternalCustomerByToken = {
     source: {
       body:
         'mutation ActivateExternalToken($input: ActivateExternalCustomerByTokenInput!) {\n  activateExternalCustomerByToken(input: $input) {\n    success\n    customer {\n      externalId\n      firstName {\n        encrypted\n        masked\n      }\n      email {\n        encrypted\n        masked\n      }\n      lastName {\n        encrypted\n        masked\n      }\n      address {\n        encrypted\n        masked\n      }\n      postalCode {\n        encrypted\n        masked\n      }\n      mobilePhoneNumber {\n        encrypted\n        masked\n      }\n      city {\n        encrypted\n        masked\n      }\n      co {\n        encrypted\n        masked\n      }\n    }\n  }\n}\n',
+      name: 'GraphQL request',
+      locationOffset: { line: 1, column: 1 },
+    },
+  },
+};
+var ActivateExternalId = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ActivateExternalId' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ActivateExternalCustomerByIdInput' },
+            },
+          },
+          directives: [],
+        },
+      ],
+      directives: [],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activateExternalCustomerById' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            directives: [],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'success' },
+                  arguments: [],
+                  directives: [],
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'token' },
+                  arguments: [],
+                  directives: [],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'value' },
+                        arguments: [],
+                        directives: [],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+  loc: {
+    start: 0,
+    end: 170,
+    source: {
+      body:
+        'mutation ActivateExternalId($input: ActivateExternalCustomerByIdInput!) {\n  activateExternalCustomerById(input: $input) {\n    success\n    token {\n      value\n    }\n  }\n}\n',
       name: 'GraphQL request',
       locationOffset: { line: 1, column: 1 },
     },
@@ -779,13 +785,13 @@ var ExternalLookupQuery = {
     },
   },
 };
-var ActivateExternalId = {
+var LoginExternalCustomer = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'ActivateExternalId' },
+      name: { kind: 'Name', value: 'loginExternalCustomer' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -794,7 +800,7 @@ var ActivateExternalId = {
             kind: 'NonNullType',
             type: {
               kind: 'NamedType',
-              name: { kind: 'Name', value: 'ActivateExternalCustomerByIdInput' },
+              name: { kind: 'Name', value: 'LoginExternalCustomerInput' },
             },
           },
           directives: [],
@@ -806,7 +812,7 @@ var ActivateExternalId = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'activateExternalCustomerById' },
+            name: { kind: 'Name', value: 'loginExternalCustomer' },
             arguments: [
               {
                 kind: 'Argument',
@@ -818,12 +824,6 @@ var ActivateExternalId = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'success' },
-                  arguments: [],
-                  directives: [],
-                },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'token' },
@@ -850,10 +850,10 @@ var ActivateExternalId = {
   ],
   loc: {
     start: 0,
-    end: 170,
+    end: 147,
     source: {
       body:
-        'mutation ActivateExternalId($input: ActivateExternalCustomerByIdInput!) {\n  activateExternalCustomerById(input: $input) {\n    success\n    token {\n      value\n    }\n  }\n}\n',
+        'mutation loginExternalCustomer($input: LoginExternalCustomerInput!) {\n  loginExternalCustomer(input: $input) {\n    token {\n      value\n    }\n  }\n}\n',
       name: 'GraphQL request',
       locationOffset: { line: 1, column: 1 },
     },
@@ -1073,7 +1073,7 @@ var LookupQuery = {
       locationOffset: { line: 1, column: 1 },
     },
   },
-}; //Semi login resolvers
+}; // Semi login resolvers
 
 function tryLogin(context, options) {
   var logIn = options.callback;
@@ -1115,9 +1115,9 @@ function tryLogin(context, options) {
                 : _data$loginExternalCu3.value
             )
           );
+        } else {
+          return Promise.reject();
         }
-
-        return Promise.reject();
       },
       function(error) {
         return Promise.reject(error);
@@ -1135,25 +1135,26 @@ function tryActivateByToken(context, options) {
             externalCustomerToken: context.externalCustomerToken,
           },
         },
+        // This is needed because we're using both the error and data to decide the next event.
         errorPolicy: 'all',
       }) // Change this when API is returning a status like we do on external lookup.
       // If we got a status, we could just forward them as event.type.
-      .then(function(response) {
-        var data = response.data;
-        var error = response.errors;
+      .then(function(_ref2) {
+        var data = _ref2.data,
+          errors = _ref2.errors;
 
-        if (error) {
+        if (errors) {
           return Promise.reject(
             _extends(
               {
-                error: _extends({}, error),
+                error: _extends({}, errors),
               },
               data
             )
           );
+        } else {
+          return Promise.resolve(data);
         }
-
-        return Promise.resolve(data);
       })
   );
 } // Lookup resolvers
@@ -1166,8 +1167,8 @@ function externalLookup(event, options) {
         key: event.data.key,
       },
     })
-    .then(function(_ref2) {
-      var data = _ref2.data;
+    .then(function(_ref3) {
+      var data = _ref3.data;
       return data;
     });
 }
@@ -1182,8 +1183,8 @@ function activateExternalId(context, options) {
         },
       },
     })
-    .then(function(_ref3) {
-      var data = _ref3.data;
+    .then(function(_ref4) {
+      var data = _ref4.data;
       return data;
     });
 }
@@ -1196,8 +1197,8 @@ function personLookup(context, options) {
         key: context.customer.emailAddress,
       },
     })
-    .then(function(_ref4) {
-      var data = _ref4.data;
+    .then(function(_ref5) {
+      var data = _ref5.data;
       return data;
     });
 }

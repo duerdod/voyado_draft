@@ -1,8 +1,6 @@
 import ApolloClient from 'apollo-client';
-import { MutationResult } from '@apollo/react-common/lib/types/types';
-import { VoyadoActivationContext } from '../states/GlobalActivation';
 import { LookupContext, LookupEvents } from '../states/ExternalLookup';
-import { ActivateExternalCustomerByTokenResult } from '@jetshop/core/types';
+import { VoyadoActivationContext } from '../states/GlobalActivation';
 declare function tryLogin(
   context: VoyadoActivationContext,
   options: {
@@ -16,11 +14,7 @@ declare function tryActivateByToken(
     client: ApolloClient<any>;
     callback?: any;
   }
-): Promise<
-  MutationResult<{
-    activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
-  }>
->;
+): Promise<any>;
 declare function externalLookup(
   event: LookupEvents,
   options: {
