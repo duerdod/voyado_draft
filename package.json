@@ -60,5 +60,7 @@
     "typescript": "^3.8.3",
     "xstate": "^4.13.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "apollo-client": "^2.6.10"
+  }
 }
