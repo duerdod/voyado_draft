@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { createActivationMachine, VoyadoProviderSettings } from '../states/GlobalActivation';
 import { useMachine } from '@xstate/react';
 
@@ -5,12 +7,13 @@ import { useApolloClient } from '@apollo/react-hooks';
 
 import useAuth from '@jetshop/core/components/AuthContext/useAuth';
 
-import { useLocation } from 'react-router';
+import { useLocation, useHistory } from 'react-router';
 import qs from 'qs';
 
 import * as resolver from '../resolver';
 
 export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
+  const history = useHistory();
   const client = useApolloClient();
   const { search } = useLocation();
   const { loggedIn, logIn } = useAuth();
@@ -43,7 +46,20 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
     isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
     isActivationRequired: state.matches('action_required.activation_failed.already_activated'),
+    // The following might cause impossible states...
+    isActionPending:
+      state.matches('checking_action_required') ||
+      state.matches('action_required.try_activate') ||
+      state.matches('action_required.activation_failed.status_response'),
   };
+
+  useEffect(() => {
+    if (states.isAdditionalDataRequired) {
+      history.push(providerSettings.signupPage || '/signup', {
+        customer: { ...state.context.customer },
+      });
+    }
+  }, [states.isAdditionalDataRequired]);
 
   return {
     ...states,
