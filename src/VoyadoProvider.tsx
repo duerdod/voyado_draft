@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
 import { useGlobalActivation } from './hooks/useGlobalActivation';
 import { VoyadoProviderSettings } from './states/GlobalActivation';
@@ -16,3 +16,11 @@ export const VoyadoProvider = (props: VoyadoProviderProps) => {
   });
   return <VoyadoContext.Provider value={activationValues} {...props} />;
 };
+
+export function useGlobalActivationValues() {
+  const context = useContext(VoyadoContext);
+  if (!context) {
+    return Error('useGlobalActivationValues cannot be used outside VoyadoProvider');
+  }
+  return context;
+}
