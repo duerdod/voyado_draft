@@ -21,7 +21,7 @@
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-router": ">=5",
-    "apollo-client": ">=2.5.0"
+    "apollo-client": ">=2"
   },
   "husky": {
     "hooks": {

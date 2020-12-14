@@ -1,18 +1,14 @@
 import ApolloClient from 'apollo-client';
-import { MutationResult } from '@apollo/react-common/lib/types/types';
-
-import { VoyadoActivationContext } from '../states/GlobalActivation';
 import { LookupContext, LookupEvents } from '../states/ExternalLookup';
+import { VoyadoActivationContext } from '../states/GlobalActivation';
 
-import { ActivateExternalCustomerByTokenResult } from '@jetshop/core/types';
-
-import LoginExternalCustomer from '../queries/LoginExternalCustomer.gql';
 import ActivateExternalCustomerByToken from '../queries/ActivateExternalCustomerByToken.gql';
-import ExternalLookupQuery from '../queries/ExternalLookupQuery.gql';
 import ActivateExternalId from '../queries/ActivateExternalId.gql';
+import ExternalLookupQuery from '../queries/ExternalLookupQuery.gql';
+import LoginExternalCustomer from '../queries/LoginExternalCustomer.gql';
 import LookupQuery from '../queries/LookupQuery.gql';
 
-//Semi login resolvers
+// Semi login resolvers
 function tryLogin(
   context: VoyadoActivationContext,
   options: {
@@ -34,10 +30,11 @@ function tryLogin(
       ({ data }) => {
         if (data?.loginExternalCustomer.token?.value) {
           return Promise.resolve(logIn(data?.loginExternalCustomer?.token?.value));
+        } else {
+          return Promise.reject();
         }
-        return Promise.reject();
       },
-      (error: any) => {
+      error => {
         return Promise.reject(error);
       }
     );
@@ -57,21 +54,17 @@ function tryActivateByToken(
         variables: {
           input: { externalCustomerToken: context.externalCustomerToken },
         },
+        // This is needed because we're using both the error and data to decide the next event.
         errorPolicy: 'all',
       })
       // Change this when API is returning a status like we do on external lookup.
       // If we got a status, we could just forward them as event.type.
-      .then((response: any) => {
-        const data: MutationResult<{
-          activateExternalCustomerByToken: ActivateExternalCustomerByTokenResult;
-        }> = response.data;
-
-        const error: any = response.errors;
-
-        if (error) {
-          return Promise.reject({ error: { ...error }, ...data });
+      .then(({ data, errors }) => {
+        if (errors) {
+          return Promise.reject({ error: { ...errors }, ...data });
+        } else {
+          return Promise.resolve(data);
         }
-        return Promise.resolve(data);
       })
   );
 }
