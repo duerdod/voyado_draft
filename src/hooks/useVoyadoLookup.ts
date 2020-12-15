@@ -2,7 +2,7 @@ import { useMachine } from '@xstate/react';
 import { LookupMachine, LookupContext, LookupEvents } from '../states/ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
 
-import * as resolver from '../resolver';
+import * as resolver from '../resolvers';
 
 export function useVoyadoLookup(settings: Partial<LookupContext>) {
   const client = useApolloClient();

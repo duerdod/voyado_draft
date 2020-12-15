@@ -10,7 +10,7 @@ import useAuth from '@jetshop/core/components/AuthContext/useAuth';
 import { useLocation, useHistory } from 'react-router';
 import qs from 'qs';
 
-import * as resolver from '../resolver';
+import * as resolver from '../resolvers';
 
 export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
   const history = useHistory();
