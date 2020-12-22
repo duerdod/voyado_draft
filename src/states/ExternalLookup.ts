@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Machine, assign, send, DoneEventObject } from 'xstate';
 
 const EVENTS = {
@@ -15,6 +17,7 @@ export interface LookupContext {
 
 export const defaultLookupOptions: LookupOptions = {
   activateOnLookup: true,
+  signInOnActivation: false,
 };
 
 interface LookupOptions {
@@ -36,7 +39,14 @@ export interface LookupSchema {
               states: {
                 activation_required: {};
                 activation_loading: {};
-                activation_success: {};
+                activation_success: {
+                  states: {
+                    try_login: {};
+                    login: {};
+                    login_failed: {};
+                    customer_created: {};
+                  };
+                };
                 activation_failed: {};
               };
             };
@@ -194,7 +204,36 @@ export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
                     },
                   },
                   activation_success: {
-                    type: 'final',
+                    id: 'activation_success',
+                    initial: 'try_login',
+                    states: {
+                      try_login: {
+                        always: [
+                          {
+                            target: 'login',
+                            cond: (context: LookupContext) =>
+                              context.lookupOptions.signInOnActivation!,
+                          },
+                          {
+                            target: 'customer_created',
+                          },
+                        ],
+                      },
+                      login: {
+                        invoke: {
+                          id: 'login',
+                          src: 'login',
+                          onDone: 'customer_created',
+                          onError: 'login_failed',
+                        },
+                      },
+                      login_failed: {
+                        type: 'final',
+                      },
+                      customer_created: {
+                        type: 'final',
+                      },
+                    },
                   },
                   activation_failed: {
                     entry: 'setActivationError',

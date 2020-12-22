@@ -39,8 +39,7 @@ export function useGlobalActivation(providerOptions: VoyadoProviderOptions) {
     },
   });
 
-  console.log('GlobalActivationState: ', JSON.stringify(state.value));
-  // console.log(state.context)
+  // console.log('GlobalActivationState: ', JSON.stringify(state.value));
 
   const states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),

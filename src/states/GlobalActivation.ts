@@ -21,8 +21,6 @@ const defaultproviderOptions: VoyadoProviderOptions = {
   manualActivation: true,
 };
 
-console.log(defaultproviderOptions);
-
 interface ActivationSchema {
   states: {
     idle: {};
