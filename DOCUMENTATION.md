@@ -1,10 +1,10 @@
 # @jetshop/flight-voyado
 
-The module provides a set of hooks needed to control the UI regarding both activation and/or signup flow using Voyado. For the complete integration to work, the customer must exist in both Jetshop and Voyado.
+This module provides a set of hooks needed to control the UI regarding both activation and/or signup flow using Voyado. For the complete integration to work, the customer must exist in both Jetshop and Voyado.
 
 There are three possible states covered by this module which the customer may end up in, each containing up to four sub-states. To get to any of these states, the end customer has two options:
 
-1.  Using a **semi login** link provided by Voyado.
+1.  Using a **semilogin** link provided by Voyado.
 2.  Using the **lookup field** provided from inside the store.
 
 From both of these, the API is returning a current customer status. There are four statuses to be returned:
@@ -14,7 +14,7 @@ From both of these, the API is returning a current customer status. There are fo
 3. **ActivationRequired:** The customer exists in Voyado, but not in Jetshop. The account needs activation in order for us to create the customer in Jetshop too.
 4. **AdditionalUserDataRequired:** The customer exists in Voyado, but there are fields in Jetshop that are required in order to create the customer. The API is returning the fields that are present in Voyado.
 
-The hooks may be initialized with an object as an argument controlling the outcome for some of the states.
+The following hook may be initialized with an object as an argument controlling the outcome for some of the states.
 
 ### useVoyadoLookup
 
@@ -27,7 +27,7 @@ The hooks takes a single options object as an argument, with the following keys:
 | activateOnLookup   | Boolean | True    | This controlls whether the end customer should manually activate the account after the lookup.  |
 | signInOnActivation | Boolean | False   | This controlls whether the end customer should manually login after previously said activation. |
 
-_Note:_ the hook may be initialized with all **or** some of the keys.
+_Note: the hook may be initialized with all **or** some of the keys._
 
 The hook is returning a set of self explanatory booleans to controll the UI.
 Something like:
@@ -88,53 +88,50 @@ In the example store, we're saving the potential customer to state, like so:
 ```jsx
 // SignInPage:
 function ExternalLookupField() {
-const  {  ...voyado  }  =  useVoyadoLookup({
-	activateOnLookup:  false,
-	signInOnActivation:  false
-});
-return(
-if (voyado.IsAdditionalDataRequired) {
-	return (
-		<Redirect to={{ pathname: '/signup', state: {...voyado} }} />
-	);
-}
-)
+  const { ...voyado } = useVoyadoLookup({
+    activateOnLookup: false,
+    signInOnActivation: false,
+  });
+  if (voyado.IsAdditionalDataRequired) {
+    return <Redirect to={{ pathname: '/signup', state: { ...voyado } }} />;
+  }
 }
 
 // SignupPage:
 function SignupPage() {
-const { state } = useLocation();
- return (
-	 <SignupFormProvider lookupData={state.customer}>
-	 // rest of form
-	 </SignupFormProvider>
- )
+  const { state } = useLocation();
+  return <SignupFormProvider lookupData={state.customer}>// rest of form</SignupFormProvider>;
 }
 ```
 
 Then, on signup, you could grab it using the useLocation hook provided from react-router-dom. SignupFormProvider is handling all prefilling for you as long as you pass the data along to it. If you'd like to manipulate the data before it. If, for example, the email should be left out of the prefilling, just delete it before passing it along.
 
+### useGlobalActivationStatus
+
+This hook does not take any arguments. Instead it's merely returning the status of the GlobalActivation, all reminding of the statuses returned by useVoyadoLookup hook. If placed for example inside the header, it can be used to show _something_ to visualize the background processes when activating a customer etcetc.
+
+In order to use either of the hooks, the VoyadoProvider must be added to the Shop. Preferably somewhat high up. The provider takes an options object with the following keys:
+
 ### VoyadoProvider
 
-#### Arguments
+#### Keys
 
-| Argument          | Type    | Default   | Description                                                                                  |
-| ----------------- | ------- | --------- | -------------------------------------------------------------------------------------------- |
-| loginPath         | String  | '/login'  | Route to redirect to if the customer exist, and manually should login.                       |
-| signupPath        | String  | '/signup' | Route to redirect to if the customer does not exist.                                         |
-| loginOnActivation | Boolean | True      | This controlls whether the end customer should be logged in when clicking a semi login link. |
-| manualActivation  | Boolean | False     | This controlls whether the end customer should be activated upon clicking a semi login link. |
+| Key               | Type    | Default   | Description                                                                                                              |
+| ----------------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| loginPath         | String  | '/login'  | Route to redirect to if the customer exist, and manually should login.                                                   |
+| signupPath        | String  | '/signup' | Route to redirect to if the customer does not exist.                                                                     |
+| loginOnActivation | Boolean | True      | This controlls whether the end customer should be logged in when clicking a semi login link.                             |
+| manualActivation  | Boolean | False     | This controlls whether the end customer should be activated upon clicking a semi login link (if activation is required). |
 
-_Note:_ the hook may be initialized with all **or** some of the keys.
+_Note: the provider may be initialized with all **or** some of the keys._
 
-## Activation chart
+## GlobalActivation chart
 
 By default, this is how it's handled:
-_Note: the outcome can be controlled by the arguments mentioned above_
 
 ```mermaid
 graph TD
-A[Customer clicks email link with hash] --> B(Was customer logged in?)
+A[Customer clicks email link with hash (Semilogin link)] -- Calls loginExternalCustomer --> B(Was customer logged in?)
 B -- No --> F(Calls activateExternalCustomerByToken)
 B -- Yes --> D(Customer exist in both Jetshop and Voyado. <br/> Signs in.)
 F --> E(Customer found?)
@@ -145,3 +142,14 @@ H -- Customer already activated --> J(Signs in)
 H -- Customer needs activation --> K(Activates customer, <br> signs in)
 H -- Additional data required --> L(Returns masked customer data, <br>Redirects to signup page with said data)
 ```
+
+_Note: the UI between some of the states can be controlled with the return values from useGlobalActivationStatus._
+
+## Lookup chart
+
+```mermaid
+graph TD
+A[Coming] -- Sorri. --> B(Right up)
+```
+
+##### A complete Voyado setup is available at https://gitlab.jetshop.se/flight/voyado.
