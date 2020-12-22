@@ -30,7 +30,7 @@ var defaultproviderOptions = {
   loginPath: '/login',
   signupPath: '/signup',
   loginOnActivation: true,
-  manualActivation: true,
+  manualActivation: false,
 };
 var StateEventMapper = {
   NoActionRequired: 'NO_ACTION_REQUIRED',
@@ -107,7 +107,9 @@ var createActivationMachine = function createActivationMachine(providerOptions) 
           always: [
             {
               target: 'checking_action_required',
-              cond: 'shouldInitialize',
+              cond: function cond(context) {
+                return context.providerOptions.loginOnActivation;
+              },
             },
             {
               target: 'no_action_required',
@@ -1242,8 +1244,9 @@ function useGlobalActivation(providerOptions) {
         },
       },
     }),
-    state = _useMachine[0]; // console.log('GlobalActivationState: ', JSON.stringify(state.value));
+    state = _useMachine[0];
 
+  console.log('GlobalActivationState: ', JSON.stringify(state.value));
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
     isNonExistingCustomer: state.matches('action_required.activation_failed.non_existing'),
@@ -1280,11 +1283,11 @@ var VoyadoProvider = function VoyadoProvider(props) {
     )
   );
 };
-function useGlobalActivationValues() {
+function useGlobalActivationStatus() {
   var context = useContext(VoyadoContext);
 
   if (!context) {
-    return Error('useGlobalActivationValues cannot be used outside VoyadoProvider');
+    return Error('useGlobalActivationStatus cannot be used outside VoyadoProvider');
   }
 
   return context;
@@ -1363,7 +1366,7 @@ var storeToken = /*#__PURE__*/ assign({
   },
 });
 var setActivationError = /*#__PURE__*/ assign({
-  activationError: function activationError() {
+  activationError: function activationError(event) {
     return '';
   },
 });
@@ -1617,7 +1620,6 @@ function useVoyadoLookup(options) {
     },
   };
   console.log('VoyadoLookupState: ', JSON.stringify(state.value));
-  console.log('VoyadoLookupState: ', state.context);
   return _extends(
     {
       lookup: lookup,
@@ -1638,7 +1640,7 @@ export {
   createActivationMachine,
   defaultLookupOptions,
   useGlobalActivation,
-  useGlobalActivationValues,
+  useGlobalActivationStatus,
   useVoyadoLookup,
 };
 //# sourceMappingURL=flight-voyado.esm.js.map
