@@ -101,7 +101,15 @@ function ExternalLookupField() {
 // SignupPage:
 function SignupPage() {
   const { state } = useLocation();
-  return <SignupFormProvider lookupData={state.customer}>// rest of form</SignupFormProvider>;
+  return (
+    <div>
+    {state?.isAdditionDataRequired && (
+      <h4>Hey, looks like we're missing some key information of you.</h4>
+      <h5>Please fill in the rest of the form and you're good to go.</h5>
+    )}
+    <SignupFormProvider lookupData={state?.customer}>// rest of form</SignupFormProvider>
+    </div>
+  )
 }
 ```
 
