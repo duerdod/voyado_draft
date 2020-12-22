@@ -17,10 +17,10 @@ export const VoyadoProvider = (props: VoyadoProviderProps) => {
   return <VoyadoContext.Provider value={activationValues} {...props} />;
 };
 
-export function useGlobalActivationValues() {
+export function useGlobalActivationStatus() {
   const context = useContext(VoyadoContext);
   if (!context) {
-    return Error('useGlobalActivationValues cannot be used outside VoyadoProvider');
+    return Error('useGlobalActivationStatus cannot be used outside VoyadoProvider');
   }
   return context;
 }

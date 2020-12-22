@@ -127,7 +127,7 @@ const storeToken = assign<LookupContext, LookupEvents>({
 });
 
 const setActivationError = assign<LookupContext, LookupEvents>({
-  activationError: () => '',
+  activationError: event => '',
 });
 
 export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
