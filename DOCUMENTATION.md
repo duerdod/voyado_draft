@@ -81,9 +81,29 @@ if (voyado.isActivationRequired) {
 
 _Note: To avoid impossible states, the functions can only be called inside a few different states. IE: The activate function has no effect when the API has returned AdditionUserDataRequired, or when the activation is pending etcetc._
 
-In addition to this, the hook is also returning the customer data for you to pre-fill the form with if requested.
+In addition to this, the hook is also returning the customer data for you to pre-fill (with masked data) the form with if requested.
 
 In the example store, we're saving the potential customer to state, like so:
+
+```jsx
+// SignInPage:
+function ExternalLookupField() {
+  const { ...voyado } = useVoyadoLookup({
+    activateOnLookup: true,
+    signInOnActivation: true,
+  });
+  return;
+  if (voyado.IsAdditionalDataRequired) {
+    return <Redirect to={{ pathname: '/signup', state: { ...voyado } }} />;
+  }
+}
+
+// SignupPage:
+function SignupPage() {
+  const { state } = useLocation();
+  return <SignupFormProvider lookupData={state.customer}>// rest of form</SignupFormProvider>;
+}
+```
 
 Then, on signup, you could grab it using the useLocation hook provided from react-router-dom. SignupFormProvider is handling all prefilling for you as long as you pass the data along to it. If you'd like to manipulate the data before it. If, for example, the email should be left out of the prefilling, just delete it before passing it along.
 
@@ -121,7 +141,7 @@ E -- Yes --> H(Checks customer status)
 H -- Customer does not exist --> I(Customer not found, <br> Redirect to signup page)
 H -- Customer already activated --> J(Signs in)
 H -- Customer needs activation --> K(Activates customer, <br> signs in)
-H -- Additional data required --> L(Returns masked customer data, <br>Redirects to signup page with said data)
+H -- Additional data required --> L(Returns masked customer data, <br>Redirects to signup page with said data inside location.state)
 ```
 
 _Note: the UI between some of the states can be controlled with the return values from useGlobalActivationStatus._
