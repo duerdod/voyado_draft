@@ -1,10 +1,10 @@
 # @jetshop/flight-voyado
 
-This module provides a set of hooks needed to control the UI regarding both activation and/or signup flow using Voyado. For the complete integration to work, the customer must exist in both Jetshop and Voyado.
+The module provides a set of hooks needed to control the UI regarding both activation and/or signup flow using Voyado. For the complete integration to work, the customer must exist in both Jetshop and Voyado.
 
 There are three possible states covered by this module which the customer may end up in, each containing up to four sub-states. To get to any of these states, the end customer has two options:
 
-1.  Using a **semilogin** link provided by Voyado.
+1.  Using a **semi login** link provided by Voyado.
 2.  Using the **lookup field** provided from inside the store.
 
 From both of these, the API is returning a current customer status. There are four statuses to be returned:
@@ -85,25 +85,6 @@ In addition to this, the hook is also returning the customer data for you to pre
 
 In the example store, we're saving the potential customer to state, like so:
 
-```jsx
-// SignInPage:
-function ExternalLookupField() {
-  const { ...voyado } = useVoyadoLookup({
-    activateOnLookup: false,
-    signInOnActivation: false,
-  });
-  if (voyado.IsAdditionalDataRequired) {
-    return <Redirect to={{ pathname: '/signup', state: { ...voyado } }} />;
-  }
-}
-
-// SignupPage:
-function SignupPage() {
-  const { state } = useLocation();
-  return <SignupFormProvider lookupData={state.customer}>// rest of form</SignupFormProvider>;
-}
-```
-
 Then, on signup, you could grab it using the useLocation hook provided from react-router-dom. SignupFormProvider is handling all prefilling for you as long as you pass the data along to it. If you'd like to manipulate the data before it. If, for example, the email should be left out of the prefilling, just delete it before passing it along.
 
 ### useGlobalActivationStatus
@@ -131,7 +112,7 @@ By default, this is how it's handled:
 
 ```mermaid
 graph TD
-A[Customer clicks email link with hash] --> B(Was customer logged in?)
+A[Customer clicks email link with hash] -- Calls loginExternalCustomer  --> B(Was customer logged in?)
 B -- No --> F(Calls activateExternalCustomerByToken)
 B -- Yes --> D(Customer exist in both Jetshop and Voyado. <br/> Signs in.)
 F --> E(Customer found?)
@@ -152,9 +133,9 @@ graph TD
 A[Coming] -- Sorri. --> B(Right up)
 ```
 
-##### A complete Voyado setup is available at https://gitlab.jetshop.se/flight/voyado, With the following core Voyado components:
+##### A complete Voyado setup is available at https://gitlab.jetshop.se/flight/voyado, with the following key Voyado components:
 
-https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/ExternalLookupField.js
-https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/LogInPage.js#L96
-https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/Signup/SignUpPage.js#L62
-https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Shop.js#L124
+- https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/ExternalLookupField.js
+- https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/LogInPage.js#L96
+- https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/Signup/SignUpPage.js#L62
+- https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Shop.js#L124
