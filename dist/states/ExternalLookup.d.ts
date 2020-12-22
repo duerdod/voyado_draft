@@ -1,9 +1,13 @@
 import { DoneEventObject } from 'xstate';
-export declare const defaultContext: Partial<LookupContext>;
 export interface LookupContext {
   customer: any;
-  activateOnLookup: boolean;
   activationError: null | string;
+  lookupOptions: LookupOptions;
+}
+export declare const defaultLookupOptions: LookupOptions;
+interface LookupOptions {
+  activateOnLookup?: boolean;
+  signInOnActivation?: boolean;
 }
 export interface LookupSchema {
   states: {
@@ -80,3 +84,4 @@ export declare const LookupMachine: import('xstate').StateMachine<
     context: LookupContext;
   }
 >;
+export {};

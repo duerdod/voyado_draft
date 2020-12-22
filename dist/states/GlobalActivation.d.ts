@@ -1,7 +1,7 @@
 import { DoneEventObject } from 'xstate';
-export interface VoyadoProviderSettings {
-  loginPage?: string;
-  signupPage?: string;
+export interface VoyadoProviderOptions {
+  loginPath?: string;
+  signupPath?: string;
   loginOnActivation?: boolean;
   manualActivation: boolean;
 }
@@ -9,7 +9,7 @@ export interface VoyadoActivationContext {
   externalCustomerToken: string;
   customer: any;
   status: StateEventMapperIndex;
-  providerSettings: VoyadoProviderSettings;
+  providerOptions: VoyadoProviderOptions;
 }
 interface ActivationSchema {
   states: {
@@ -60,7 +60,7 @@ declare type StateEventMapperIndex =
   | 'CustomerAlreadyActivated'
   | 'AdditionalUserDataRequired';
 export declare const createActivationMachine: (
-  providerSettings: VoyadoProviderSettings
+  providerOptions: VoyadoProviderOptions
 ) => import('xstate').StateMachine<
   VoyadoActivationContext,
   ActivationSchema,

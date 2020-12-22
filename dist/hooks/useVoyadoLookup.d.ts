@@ -1,6 +1,6 @@
 import { LookupContext } from '../states/ExternalLookup';
 export declare function useVoyadoLookup(
-  settings: Partial<LookupContext>
+  options: Partial<LookupContext>
 ): {
   customer: any;
   isActivationRequired: boolean;

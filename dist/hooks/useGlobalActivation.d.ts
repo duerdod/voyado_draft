@@ -1,6 +1,6 @@
-import { VoyadoProviderSettings } from '../states/GlobalActivation';
+import { VoyadoProviderOptions } from '../states/GlobalActivation';
 export declare function useGlobalActivation(
-  providerSettings: VoyadoProviderSettings
+  providerOptions: VoyadoProviderOptions
 ): {
   isAdditionalDataRequired: boolean;
   isNonExistingCustomer: boolean;

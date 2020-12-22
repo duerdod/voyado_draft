@@ -33,6 +33,13 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
+var defaultproviderOptions = {
+  loginPath: '/login',
+  signupPath: '/signup',
+  loginOnActivation: true,
+  manualActivation: true,
+};
+console.log(defaultproviderOptions);
 var StateEventMapper = {
   NoActionRequired: 'NO_ACTION_REQUIRED',
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
@@ -80,7 +87,7 @@ var storeCustomer = /*#__PURE__*/ xstate.assign({
     }
   },
 });
-var createActivationMachine = function createActivationMachine(providerSettings) {
+var createActivationMachine = function createActivationMachine(providerOptions) {
   return xstate.Machine(
     {
       id: 'ActivationMachine',
@@ -89,7 +96,7 @@ var createActivationMachine = function createActivationMachine(providerSettings)
         externalCustomerToken: '',
         customer: undefined,
         status: 'NoActionRequired',
-        providerSettings: _extends({}, providerSettings),
+        providerOptions: _extends({}, defaultproviderOptions, {}, providerOptions),
       },
       states: {
         idle: {
@@ -1203,7 +1210,7 @@ function personLookup(context, options) {
     });
 }
 
-function useGlobalActivation(providerSettings) {
+function useGlobalActivation(providerOptions) {
   var history = reactRouter.useHistory();
   var client = reactHooks.useApolloClient();
 
@@ -1220,7 +1227,7 @@ function useGlobalActivation(providerSettings) {
     _qs$parse$eclub = _qs$parse.eclub,
     eclub = _qs$parse$eclub === void 0 ? '' : _qs$parse$eclub;
 
-  var _useMachine = react.useMachine(createActivationMachine(providerSettings), {
+  var _useMachine = react.useMachine(createActivationMachine(providerOptions), {
       context: {
         externalCustomerToken: encodeURIComponent(eclub),
       },
@@ -1260,7 +1267,7 @@ function useGlobalActivation(providerSettings) {
   React.useEffect(
     function() {
       if (states.isAdditionalDataRequired) {
-        history.push(providerSettings.signupPage || '/signup', {
+        history.push(providerOptions.signupPath || '/signup', {
           customer: _extends({}, state.context.customer),
         });
       }
@@ -1272,7 +1279,7 @@ function useGlobalActivation(providerSettings) {
 
 var VoyadoContext = /*#__PURE__*/ React.createContext({});
 var VoyadoProvider = function VoyadoProvider(props) {
-  var activationValues = useGlobalActivation(_extends({}, props.settings));
+  var activationValues = useGlobalActivation(_extends({}, props.options));
   return React__default.createElement(
     VoyadoContext.Provider,
     Object.assign(
@@ -1300,8 +1307,8 @@ var EVENTS = {
   ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
   NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
 };
-var defaultContext = {
-  activateOnLookup: false,
+var defaultLookupOptions = {
+  activateOnLookup: true,
 };
 var sendLookupSuccessEvent = /*#__PURE__*/ xstate.send(function(_, event) {
   return {
@@ -1375,8 +1382,8 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
     initial: 'idle',
     context: {
       activationError: null,
-      activateOnLookup: false,
       customer: undefined,
+      lookupOptions: {},
     },
     states: {
       idle: {
@@ -1418,7 +1425,7 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
                   (_on[EVENTS.NON_EXISTING_CUSTOMER] = '#non_existing'),
                   _on),
               },
-              // Account needs activation. Then can login.
+              // Account needs activation.
               activation: {
                 id: 'activation',
                 initial: 'activation_required',
@@ -1427,7 +1434,7 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
                     always: {
                       target: 'activation_loading',
                       cond: function cond(context) {
-                        return context.activateOnLookup;
+                        return context.lookupOptions.activateOnLookup;
                       },
                     },
                     on: {
@@ -1513,7 +1520,7 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
   }
 );
 
-function useVoyadoLookup(settings) {
+function useVoyadoLookup(options) {
   var client = reactHooks.useApolloClient();
 
   var _useMachine = react.useMachine(LookupMachine, {
@@ -1534,7 +1541,7 @@ function useVoyadoLookup(settings) {
           });
         },
       },
-      context: _extends({}, settings, {
+      context: _extends({}, defaultLookupOptions, {}, options, {
         customer: null,
       }),
     }),
@@ -1597,7 +1604,7 @@ exports.LookupMachine = LookupMachine;
 exports.VoyadoContext = VoyadoContext;
 exports.VoyadoProvider = VoyadoProvider;
 exports.createActivationMachine = createActivationMachine;
-exports.defaultContext = defaultContext;
+exports.defaultLookupOptions = defaultLookupOptions;
 exports.useGlobalActivation = useGlobalActivation;
 exports.useGlobalActivationValues = useGlobalActivationValues;
 exports.useVoyadoLookup = useVoyadoLookup;
