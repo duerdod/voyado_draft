@@ -131,7 +131,7 @@ By default, this is how it's handled:
 
 ```mermaid
 graph TD
-A[Customer clicks email link with hash (Semilogin link)] -- Calls loginExternalCustomer --> B(Was customer logged in?)
+A[Customer clicks email link with hash] --> B(Was customer logged in?)
 B -- No --> F(Calls activateExternalCustomerByToken)
 B -- Yes --> D(Customer exist in both Jetshop and Voyado. <br/> Signs in.)
 F --> E(Customer found?)
