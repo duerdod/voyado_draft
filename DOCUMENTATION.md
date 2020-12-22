@@ -33,16 +33,25 @@ The hook is returning a set of self explanatory booleans to controll the UI.
 Something like:
 
 ```jsx
-const { activate, ...voyado } = useVoyadoLookup({
-  activateOnLookup: false,
+const { ...voyado } = useVoyadoLookup({
+  activateOnLookup: true,
   signInOnActivation: false,
 });
 
-if (voyado.isActivationRequired) {
+if (voyado.isPreExistingCustomer) {
   return (
-    <TrendButton onClick={activate}>
-      The account has been activated. Click here to login.
-    </TrendButton>
+    <LogInFormProvider initialEmail={voyado?.customer?.emailAddress?.masked}>
+      {({ globalError, isSubmitting, isValid }) => (
+        <>
+          <Input id="email" type="email" name="email" />
+          <Input type="password" name="password" />
+
+          {globalError && <GlobalError>{globalError}</GlobalError>}
+
+          <TrendButton type="submit">{t('Log in')}</TrendButton>
+        </>
+      )}
+    </LogInFormProvider>
   );
 }
 ```
