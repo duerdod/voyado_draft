@@ -18,7 +18,7 @@ const defaultproviderOptions: VoyadoProviderOptions = {
   loginPath: '/login',
   signupPath: '/signup',
   loginOnActivation: true,
-  manualActivation: true,
+  manualActivation: false,
 };
 
 interface ActivationSchema {
@@ -131,7 +131,8 @@ export const createActivationMachine = (providerOptions: VoyadoProviderOptions) 
           always: [
             {
               target: 'checking_action_required',
-              cond: 'shouldInitialize',
+              cond: (context: VoyadoActivationContext) =>
+                context.providerOptions.loginOnActivation!,
             },
             {
               target: 'no_action_required',
