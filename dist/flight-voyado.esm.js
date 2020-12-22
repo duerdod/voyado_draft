@@ -26,6 +26,12 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
+var defaultproviderOptions = {
+  loginPath: '/login',
+  signupPath: '/signup',
+  loginOnActivation: true,
+  manualActivation: true,
+};
 var StateEventMapper = {
   NoActionRequired: 'NO_ACTION_REQUIRED',
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
@@ -73,7 +79,7 @@ var storeCustomer = /*#__PURE__*/ assign({
     }
   },
 });
-var createActivationMachine = function createActivationMachine(providerSettings) {
+var createActivationMachine = function createActivationMachine(providerOptions) {
   return Machine(
     {
       id: 'ActivationMachine',
@@ -82,7 +88,7 @@ var createActivationMachine = function createActivationMachine(providerSettings)
         externalCustomerToken: '',
         customer: undefined,
         status: 'NoActionRequired',
-        providerSettings: _extends({}, providerSettings),
+        providerOptions: _extends({}, defaultproviderOptions, {}, providerOptions),
       },
       states: {
         idle: {
@@ -1196,7 +1202,7 @@ function personLookup(context, options) {
     });
 }
 
-function useGlobalActivation(providerSettings) {
+function useGlobalActivation(providerOptions) {
   var history = useHistory();
   var client = useApolloClient();
 
@@ -1213,7 +1219,7 @@ function useGlobalActivation(providerSettings) {
     _qs$parse$eclub = _qs$parse.eclub,
     eclub = _qs$parse$eclub === void 0 ? '' : _qs$parse$eclub;
 
-  var _useMachine = useMachine(createActivationMachine(providerSettings), {
+  var _useMachine = useMachine(createActivationMachine(providerOptions), {
       context: {
         externalCustomerToken: encodeURIComponent(eclub),
       },
@@ -1236,9 +1242,7 @@ function useGlobalActivation(providerSettings) {
         },
       },
     }),
-    state = _useMachine[0];
-
-  console.log('GlobalActivationState: ', JSON.stringify(state.value)); // console.log(state.context)
+    state = _useMachine[0]; // console.log('GlobalActivationState: ', JSON.stringify(state.value));
 
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
@@ -1253,7 +1257,7 @@ function useGlobalActivation(providerSettings) {
   useEffect(
     function() {
       if (states.isAdditionalDataRequired) {
-        history.push(providerSettings.signupPage || '/signup', {
+        history.push(providerOptions.signupPath || '/signup', {
           customer: _extends({}, state.context.customer),
         });
       }
@@ -1265,7 +1269,7 @@ function useGlobalActivation(providerSettings) {
 
 var VoyadoContext = /*#__PURE__*/ createContext({});
 var VoyadoProvider = function VoyadoProvider(props) {
-  var activationValues = useGlobalActivation(_extends({}, props.settings));
+  var activationValues = useGlobalActivation(_extends({}, props.options));
   return React.createElement(
     VoyadoContext.Provider,
     Object.assign(
@@ -1293,8 +1297,9 @@ var EVENTS = {
   ADDITIONAL_USER_DATA_REQUIRED: 'ADDITIONAL_USER_DATA_REQUIRED',
   NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
 };
-var defaultContext = {
-  activateOnLookup: false,
+var defaultLookupOptions = {
+  activateOnLookup: true,
+  signInOnActivation: false,
 };
 var sendLookupSuccessEvent = /*#__PURE__*/ send(function(_, event) {
   return {
@@ -1368,8 +1373,8 @@ var LookupMachine = /*#__PURE__*/ Machine(
     initial: 'idle',
     context: {
       activationError: null,
-      activateOnLookup: false,
       customer: undefined,
+      lookupOptions: {},
     },
     states: {
       idle: {
@@ -1411,7 +1416,7 @@ var LookupMachine = /*#__PURE__*/ Machine(
                   (_on[EVENTS.NON_EXISTING_CUSTOMER] = '#non_existing'),
                   _on),
               },
-              // Account needs activation. Then can login.
+              // Account needs activation.
               activation: {
                 id: 'activation',
                 initial: 'activation_required',
@@ -1420,7 +1425,7 @@ var LookupMachine = /*#__PURE__*/ Machine(
                     always: {
                       target: 'activation_loading',
                       cond: function cond(context) {
-                        return context.activateOnLookup;
+                        return context.lookupOptions.activateOnLookup;
                       },
                     },
                     on: {
@@ -1439,7 +1444,37 @@ var LookupMachine = /*#__PURE__*/ Machine(
                     },
                   },
                   activation_success: {
-                    type: 'final',
+                    id: 'activation_success',
+                    initial: 'try_login',
+                    states: {
+                      try_login: {
+                        always: [
+                          {
+                            target: 'login',
+                            cond: function cond(context) {
+                              return context.lookupOptions.signInOnActivation;
+                            },
+                          },
+                          {
+                            target: 'customer_created',
+                          },
+                        ],
+                      },
+                      login: {
+                        invoke: {
+                          id: 'login',
+                          src: 'login',
+                          onDone: 'customer_created',
+                          onError: 'login_failed',
+                        },
+                      },
+                      login_failed: {
+                        type: 'final',
+                      },
+                      customer_created: {
+                        type: 'final',
+                      },
+                    },
                   },
                   activation_failed: {
                     entry: 'setActivationError',
@@ -1506,8 +1541,11 @@ var LookupMachine = /*#__PURE__*/ Machine(
   }
 );
 
-function useVoyadoLookup(settings) {
+function useVoyadoLookup(options) {
   var client = useApolloClient();
+
+  var _useAuth = useAuth(),
+    logIn = _useAuth.logIn;
 
   var _useMachine = useMachine(LookupMachine, {
       services: {
@@ -1526,10 +1564,14 @@ function useVoyadoLookup(settings) {
             client: client,
           });
         },
+        login: function login(context) {
+          return Promise.resolve(logIn(context.customer.token));
+        },
       },
-      context: _extends({}, settings, {
+      context: {
         customer: null,
-      }),
+        lookupOptions: _extends({}, defaultLookupOptions, {}, options),
+      },
     }),
     state = _useMachine[0],
     send = _useMachine[1];
@@ -1558,7 +1600,9 @@ function useVoyadoLookup(settings) {
   var states = {
     isActivationRequired: state.matches('lookup.lookup_success.activation.activation_required'),
     isActivationPending: state.matches('lookup.lookup_success.activation.activation_loading'),
-    isActivationSuccess: state.matches('lookup.lookup_success.activation.activation_success'),
+    isActivationSuccess: state.matches(
+      'lookup.lookup_success.activation.activation_success.customer_created'
+    ),
     isPreExistingCustomer: state.matches('lookup.lookup_success.preexisting'),
     IsAdditionalDataRequired: state.matches('lookup.lookup_success.additional_data'),
     isNonExistingCustomer: state.matches('lookup.lookup_success.non_existing'),
@@ -1573,6 +1617,7 @@ function useVoyadoLookup(settings) {
     },
   };
   console.log('VoyadoLookupState: ', JSON.stringify(state.value));
+  console.log('VoyadoLookupState: ', state.context);
   return _extends(
     {
       lookup: lookup,
@@ -1591,7 +1636,7 @@ export {
   VoyadoContext,
   VoyadoProvider,
   createActivationMachine,
-  defaultContext,
+  defaultLookupOptions,
   useGlobalActivation,
   useGlobalActivationValues,
   useVoyadoLookup,

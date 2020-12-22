@@ -39,7 +39,6 @@ var defaultproviderOptions = {
   loginOnActivation: true,
   manualActivation: true,
 };
-console.log(defaultproviderOptions);
 var StateEventMapper = {
   NoActionRequired: 'NO_ACTION_REQUIRED',
   CustomerNotFound: 'NON_EXISTING_CUSTOMER',
@@ -1250,9 +1249,7 @@ function useGlobalActivation(providerOptions) {
         },
       },
     }),
-    state = _useMachine[0];
-
-  console.log('GlobalActivationState: ', JSON.stringify(state.value)); // console.log(state.context)
+    state = _useMachine[0]; // console.log('GlobalActivationState: ', JSON.stringify(state.value));
 
   var states = {
     isAdditionalDataRequired: state.matches('action_required.activation_failed.additional_data'),
@@ -1309,6 +1306,7 @@ var EVENTS = {
 };
 var defaultLookupOptions = {
   activateOnLookup: true,
+  signInOnActivation: false,
 };
 var sendLookupSuccessEvent = /*#__PURE__*/ xstate.send(function(_, event) {
   return {
@@ -1453,7 +1451,37 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
                     },
                   },
                   activation_success: {
-                    type: 'final',
+                    id: 'activation_success',
+                    initial: 'try_login',
+                    states: {
+                      try_login: {
+                        always: [
+                          {
+                            target: 'login',
+                            cond: function cond(context) {
+                              return context.lookupOptions.signInOnActivation;
+                            },
+                          },
+                          {
+                            target: 'customer_created',
+                          },
+                        ],
+                      },
+                      login: {
+                        invoke: {
+                          id: 'login',
+                          src: 'login',
+                          onDone: 'customer_created',
+                          onError: 'login_failed',
+                        },
+                      },
+                      login_failed: {
+                        type: 'final',
+                      },
+                      customer_created: {
+                        type: 'final',
+                      },
+                    },
                   },
                   activation_failed: {
                     entry: 'setActivationError',
@@ -1523,6 +1551,9 @@ var LookupMachine = /*#__PURE__*/ xstate.Machine(
 function useVoyadoLookup(options) {
   var client = reactHooks.useApolloClient();
 
+  var _useAuth = useAuth(),
+    logIn = _useAuth.logIn;
+
   var _useMachine = react.useMachine(LookupMachine, {
       services: {
         externalLookup: function externalLookup$1(_, event) {
@@ -1540,10 +1571,14 @@ function useVoyadoLookup(options) {
             client: client,
           });
         },
+        login: function login(context) {
+          return Promise.resolve(logIn(context.customer.token));
+        },
       },
-      context: _extends({}, defaultLookupOptions, {}, options, {
+      context: {
         customer: null,
-      }),
+        lookupOptions: _extends({}, defaultLookupOptions, {}, options),
+      },
     }),
     state = _useMachine[0],
     send = _useMachine[1];
@@ -1572,7 +1607,9 @@ function useVoyadoLookup(options) {
   var states = {
     isActivationRequired: state.matches('lookup.lookup_success.activation.activation_required'),
     isActivationPending: state.matches('lookup.lookup_success.activation.activation_loading'),
-    isActivationSuccess: state.matches('lookup.lookup_success.activation.activation_success'),
+    isActivationSuccess: state.matches(
+      'lookup.lookup_success.activation.activation_success.customer_created'
+    ),
     isPreExistingCustomer: state.matches('lookup.lookup_success.preexisting'),
     IsAdditionalDataRequired: state.matches('lookup.lookup_success.additional_data'),
     isNonExistingCustomer: state.matches('lookup.lookup_success.non_existing'),
@@ -1587,6 +1624,7 @@ function useVoyadoLookup(options) {
     },
   };
   console.log('VoyadoLookupState: ', JSON.stringify(state.value));
+  console.log('VoyadoLookupState: ', state.context);
   return _extends(
     {
       lookup: lookup,

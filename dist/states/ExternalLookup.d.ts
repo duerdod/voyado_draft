@@ -23,7 +23,14 @@ export interface LookupSchema {
               states: {
                 activation_required: {};
                 activation_loading: {};
-                activation_success: {};
+                activation_success: {
+                  states: {
+                    try_login: {};
+                    login: {};
+                    login_failed: {};
+                    customer_created: {};
+                  };
+                };
                 activation_failed: {};
               };
             };
