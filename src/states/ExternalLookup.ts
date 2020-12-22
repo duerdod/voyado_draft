@@ -7,14 +7,19 @@ const EVENTS = {
   NON_EXISTING_CUSTOMER: 'NON_EXISTING_CUSTOMER',
 };
 
-export const defaultContext: Partial<LookupContext> = {
-  activateOnLookup: false,
-};
-
 export interface LookupContext {
   customer: any;
-  activateOnLookup: boolean;
   activationError: null | string;
+  lookupOptions: LookupOptions;
+}
+
+export const defaultLookupOptions: LookupOptions = {
+  activateOnLookup: true,
+};
+
+interface LookupOptions {
+  activateOnLookup?: boolean;
+  signInOnActivation?: boolean;
 }
 
 export interface LookupSchema {
@@ -121,8 +126,8 @@ export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
     initial: 'idle',
     context: {
       activationError: null,
-      activateOnLookup: false,
       customer: undefined,
+      lookupOptions: {},
     },
     states: {
       idle: {
@@ -163,7 +168,7 @@ export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
                   [EVENTS.NON_EXISTING_CUSTOMER]: '#non_existing',
                 },
               },
-              // Account needs activation. Then can login.
+              // Account needs activation.
               activation: {
                 id: 'activation',
                 initial: 'activation_required',
@@ -171,7 +176,7 @@ export const LookupMachine = Machine<LookupContext, LookupSchema, LookupEvents>(
                   activation_required: {
                     always: {
                       target: 'activation_loading',
-                      cond: context => context.activateOnLookup,
+                      cond: (context: LookupContext) => context.lookupOptions.activateOnLookup!,
                     },
                     on: {
                       ACTIVATE_CUSTOMER: 'activation_loading',

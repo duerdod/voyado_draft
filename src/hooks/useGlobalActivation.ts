@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { createActivationMachine, VoyadoProviderSettings } from '../states/GlobalActivation';
+import { createActivationMachine, VoyadoProviderOptions } from '../states/GlobalActivation';
 import { useMachine } from '@xstate/react';
 
 import { useApolloClient } from '@apollo/react-hooks';
@@ -12,14 +12,14 @@ import qs from 'qs';
 
 import * as resolver from '../resolvers';
 
-export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
+export function useGlobalActivation(providerOptions: VoyadoProviderOptions) {
   const history = useHistory();
   const client = useApolloClient();
   const { search } = useLocation();
   const { loggedIn, logIn } = useAuth();
   const { eclub = '' } = qs.parse(search, { ignoreQueryPrefix: true });
 
-  const [state] = useMachine(createActivationMachine(providerSettings), {
+  const [state] = useMachine(createActivationMachine(providerOptions), {
     context: {
       externalCustomerToken: encodeURIComponent(eclub as string),
     },
@@ -55,7 +55,7 @@ export function useGlobalActivation(providerSettings: VoyadoProviderSettings) {
 
   useEffect(() => {
     if (states.isAdditionalDataRequired) {
-      history.push(providerSettings.signupPage || '/signup', {
+      history.push(providerOptions.signupPath || '/signup', {
         customer: { ...state.context.customer },
       });
     }

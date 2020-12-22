@@ -1,18 +1,18 @@
 import React, { createContext, useContext } from 'react';
 
 import { useGlobalActivation } from './hooks/useGlobalActivation';
-import { VoyadoProviderSettings } from './states/GlobalActivation';
+import { VoyadoProviderOptions } from './states/GlobalActivation';
 
 export const VoyadoContext = createContext({});
 
 interface VoyadoProviderProps {
   children: React.ReactNode;
-  settings: VoyadoProviderSettings;
+  options: VoyadoProviderOptions;
 }
 
 export const VoyadoProvider = (props: VoyadoProviderProps) => {
   const activationValues = useGlobalActivation({
-    ...props.settings,
+    ...props.options,
   });
   return <VoyadoContext.Provider value={activationValues} {...props} />;
 };

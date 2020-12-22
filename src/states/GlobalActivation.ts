@@ -1,8 +1,8 @@
 import { assign, Machine, send, DoneEventObject } from 'xstate';
 
-export interface VoyadoProviderSettings {
-  loginPage?: string;
-  signupPage?: string;
+export interface VoyadoProviderOptions {
+  loginPath?: string;
+  signupPath?: string;
   loginOnActivation?: boolean;
   manualActivation: boolean;
 }
@@ -11,8 +11,17 @@ export interface VoyadoActivationContext {
   externalCustomerToken: string;
   customer: any;
   status: StateEventMapperIndex;
-  providerSettings: VoyadoProviderSettings;
+  providerOptions: VoyadoProviderOptions;
 }
+
+const defaultproviderOptions: VoyadoProviderOptions = {
+  loginPath: '/login',
+  signupPath: '/signup',
+  loginOnActivation: true,
+  manualActivation: true,
+};
+
+console.log(defaultproviderOptions);
 
 interface ActivationSchema {
   states: {
@@ -93,7 +102,7 @@ const storeCustomer = assign<VoyadoActivationContext, ActivationEvents>({
   },
 });
 
-export const createActivationMachine = (providerSettings: VoyadoProviderSettings) =>
+export const createActivationMachine = (providerOptions: VoyadoProviderOptions) =>
   Machine<VoyadoActivationContext, ActivationSchema, ActivationEvents>(
     {
       id: 'ActivationMachine',
@@ -102,8 +111,9 @@ export const createActivationMachine = (providerSettings: VoyadoProviderSettings
         externalCustomerToken: '',
         customer: undefined,
         status: 'NoActionRequired',
-        providerSettings: {
-          ...providerSettings,
+        providerOptions: {
+          ...defaultproviderOptions,
+          ...providerOptions,
         },
       },
       states: {

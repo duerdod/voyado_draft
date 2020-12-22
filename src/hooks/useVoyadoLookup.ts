@@ -1,10 +1,15 @@
 import { useMachine } from '@xstate/react';
-import { LookupMachine, LookupContext, LookupEvents } from '../states/ExternalLookup';
+import {
+  LookupMachine,
+  LookupContext,
+  LookupEvents,
+  defaultLookupOptions,
+} from '../states/ExternalLookup';
 import { useApolloClient } from '@apollo/react-hooks';
 
 import * as resolver from '../resolvers';
 
-export function useVoyadoLookup(settings: Partial<LookupContext>) {
+export function useVoyadoLookup(options: Partial<LookupContext>) {
   const client = useApolloClient();
   const [state, send] = useMachine(LookupMachine, {
     services: {
@@ -25,7 +30,8 @@ export function useVoyadoLookup(settings: Partial<LookupContext>) {
       },
     },
     context: {
-      ...settings,
+      ...defaultLookupOptions,
+      ...options,
       customer: null,
     },
   });
