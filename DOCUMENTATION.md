@@ -152,4 +152,9 @@ graph TD
 A[Coming] -- Sorri. --> B(Right up)
 ```
 
-##### A complete Voyado setup is available at https://gitlab.jetshop.se/flight/voyado.
+##### A complete Voyado setup is available at https://gitlab.jetshop.se/flight/voyado, With the following core Voyado components:
+
+https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/ExternalLookupField.js
+https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/LogInPage.js#L96
+https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Auth/Signup/SignUpPage.js#L62
+https://gitlab.jetshop.se/flight/voyado/-/blob/master/src/components/Shop.js#L124
